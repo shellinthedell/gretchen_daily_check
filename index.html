@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Next Step — study help that starts small</title>
+<title>Gretchen’s Daily Check</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -11,7 +11,8 @@
 :root{
   --bg:#F2F5FB; --surface:#FFFFFF; --ink:#1F2A44; --muted:#5A6684; --line:#D9E0EE;
   --accent:#4F5FE8; --accent-ink:#FFFFFF; --accent-soft:#E4E7FD;
-  --sun:#B87900; --sun-soft:#FFF1CF; --mint:#1E8A66; --mint-soft:#D9F3E9; --rose:#B4314F; --rose-soft:#FBE2E8;
+  --c-today:#4F5FE8; --c-due:#9A6700; --c-start:#C2410C; --c-assignments:#4B5A7A; --c-tests:#7C4DDB; --c-strategies:#B0378A; --c-calm:#0E7C86;
+  --sun:#9A6700; --sun-soft:#FFF1CF; --later:#1E7A4F; --later-soft:#DDF2E5; --mint:#1E8A66; --mint-soft:#D9F3E9; --rose:#B4314F; --rose-soft:#FBE2E8;
   color-scheme: light;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
@@ -19,6 +20,8 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
+    --c-today:#8C97FF; --c-due:#F4C35A; --c-start:#FF9A6B; --c-assignments:#A8B4CF; --c-tests:#B79CFF; --c-strategies:#F28AD0; --c-calm:#5CCAD3;
+    --later:#6FD69B; --later-soft:#183A2A;
     --bg:#12182A; --surface:#1B2338; --ink:#E7EBF7; --muted:#A1ABC6; --line:#2E3854;
     --accent:#8C97FF; --accent-ink:#12182A; --accent-soft:#2A3160;
     --sun:#F4C35A; --sun-soft:#3A3120; --mint:#5CD3A6; --mint-soft:#1A3A31; --rose:#FF8DA6; --rose-soft:#3E2230;
@@ -26,6 +29,8 @@
   }
 }
 :root[data-theme="dark"]{
+  --c-today:#8C97FF; --c-due:#F4C35A; --c-start:#FF9A6B; --c-assignments:#A8B4CF; --c-tests:#B79CFF; --c-strategies:#F28AD0; --c-calm:#5CCAD3;
+  --later:#6FD69B; --later-soft:#183A2A;
   --bg:#12182A; --surface:#1B2338; --ink:#E7EBF7; --muted:#A1ABC6; --line:#2E3854;
   --accent:#8C97FF; --accent-ink:#12182A; --accent-soft:#2A3160;
   --sun:#F4C35A; --sun-soft:#3A3120; --mint:#5CD3A6; --mint-soft:#1A3A31; --rose:#FF8DA6; --rose-soft:#3E2230;
@@ -43,15 +48,26 @@ button,input,select,textarea{font:inherit;color:inherit}
 .wrap{max-width:46rem;margin:0 auto;padding:0 1.25rem}
 
 /* header */
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:3px solid var(--secnow,var(--line));transition:border-color .2s}
 .bar{display:flex;align-items:center;gap:1rem;padding:.9rem 0 .6rem}
 .logo{font-weight:700;font-size:1.15rem;letter-spacing:-.01em;display:flex;align-items:center;gap:.5rem}
 .logo .dot{width:.85rem;height:.85rem;border-radius:50%;background:var(--accent);box-shadow:1.1rem 0 0 -.15rem var(--accent-soft)}
 .logo span{margin-left:.9rem}
 nav{display:flex;gap:.25rem;overflow-x:auto;padding-bottom:.6rem;scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
-nav a{flex:none;text-decoration:none;color:var(--muted);padding:.4rem .85rem;border-radius:999px;font-weight:400;font-size:.95rem}
-nav a[aria-current="page"]{background:var(--ink);color:var(--bg);font-weight:500}
+nav a{flex:none;text-decoration:none;color:var(--muted);padding:.4rem .85rem;border-radius:999px;font-weight:400;font-size:.95rem;display:inline-flex;align-items:center;gap:.45rem}
+nav a::before{content:"";width:.6rem;height:.6rem;border-radius:50%;background:var(--sec);flex:none}
+nav a:hover{color:var(--ink)}
+nav a[aria-current="page"]{background:var(--sec);color:var(--bg);font-weight:500}
+nav a[aria-current="page"]::before{background:var(--bg)}
+[href="#today"],section[data-view="today"]{--sec:var(--c-today)}
+[href="#due"],section[data-view="due"]{--sec:var(--c-due)}
+[href="#start"],section[data-view="start"]{--sec:var(--c-start)}
+[href="#assignments"],section[data-view="assignments"]{--sec:var(--c-assignments)}
+[href="#tests"],section[data-view="tests"]{--sec:var(--c-tests)}
+[href="#strategies"],section[data-view="strategies"]{--sec:var(--c-strategies)}
+[href="#calm"],section[data-view="calm"]{--sec:var(--c-calm)}
+section[data-view] > h2::before{content:"";display:block;width:2.75rem;height:6px;border-radius:3px;background:var(--sec);margin-bottom:.7rem}
 
 main{padding:1.75rem 0 4rem}
 section[data-view]{display:none}
@@ -100,14 +116,14 @@ textarea{resize:vertical;min-height:6rem;line-height:1.5}
 .item{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:.85rem 1rem;margin-bottom:.6rem;display:grid;grid-template-columns:auto 1fr auto;gap:.85rem;align-items:start}
 .item.done .t{text-decoration:line-through;color:var(--muted)}
 .check{appearance:none;width:1.6rem;height:1.6rem;border:2px solid var(--muted);border-radius:50%;margin:.1rem 0 0;cursor:pointer;display:grid;place-items:center;flex:none}
-.check:checked{background:var(--mint);border-color:var(--mint)}
+.check:checked{background:var(--accent);border-color:var(--accent)}
 .check:checked::after{content:"";width:.45rem;height:.8rem;border:solid var(--surface);border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
 .t{font-weight:500}
 .sub{font-size:.9rem;color:var(--muted)}
 .tag{display:inline-block;font-size:.8rem;padding:.1rem .55rem;border-radius:999px;font-weight:500;margin-right:.35rem}
 .tag.late{background:var(--rose-soft);color:var(--rose)}
 .tag.soon{background:var(--sun-soft);color:var(--sun)}
-.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.ok{background:var(--later-soft);color:var(--later)}
 .tag.big{background:var(--line);color:var(--ink)}
 .steps{margin:.5rem 0 0;padding:0;list-style:none}
 .steps li{display:flex;gap:.55rem;align-items:center;font-size:.95rem;padding:.15rem 0}
@@ -136,6 +152,13 @@ label.btn{display:inline-flex;align-items:center;color:var(--accent-ink);margin:
 .ailist{margin:.75rem 0;padding-left:1.25rem}
 .ailist li{margin-bottom:.3rem}
 .stuck{color:inherit;opacity:.8;font-size:.92rem;margin-left:.35rem}
+.item.u-late,.panel.u-late{border-left:6px solid var(--rose)}
+.item.u-soon,.panel.u-soon{border-left:6px solid var(--sun)}
+.item.u-ok,.panel.u-ok{border-left:6px solid var(--later)}
+.pill{display:inline-block;font-size:.85rem;font-weight:600;padding:.15rem .7rem;border-radius:999px;margin-bottom:.6rem;color:var(--bg)}
+.pill.u-late{background:var(--rose)}.pill.u-soon{background:var(--sun)}.pill.u-ok{background:var(--later)}
+.legend{display:flex;flex-wrap:wrap;gap:.35rem 1rem;font-size:.85rem;color:var(--muted);margin:0 0 .9rem}
+.legend i{display:inline-block;width:.7rem;height:.7rem;border-radius:50%;margin-right:.4rem;vertical-align:-.05rem}
 .steps li span{flex:1}
 .reqs-h{font-size:.85rem;color:var(--muted);margin-top:.7rem}
 .reqs{margin-top:.2rem}
@@ -187,9 +210,10 @@ details .try b{font-weight:600}
 <body>
 <header>
   <div class="wrap">
-    <div class="bar"><div class="logo"><i class="dot" aria-hidden="true"></i><span>Next Step</span></div></div>
+    <div class="bar"><div class="logo"><i class="dot" aria-hidden="true"></i><span>Gretchen’s Daily Check</span></div></div>
     <nav aria-label="Sections">
       <a href="#today">Today</a>
+      <a href="#due">Due by tomorrow</a>
       <a href="#start">Help me start</a>
       <a href="#assignments">Assignments</a>
       <a href="#tests">Test plans</a>
@@ -216,6 +240,7 @@ details .try b{font-weight:600}
     </div>
   </div>
 
+  <div id="dueSoon"></div>
   <div id="todaySessions"></div>
 
   <div class="panel">
@@ -227,6 +252,14 @@ details .try b{font-weight:600}
       <div><button class="btn" type="submit">Add assignment</button></div>
     </form>
   </div>
+</section>
+
+<!-- DUE BY TOMORROW -->
+<section data-view="due" aria-labelledby="h-due">
+  <h2 id="h-due">Due by tomorrow</h2>
+  <p class="intro">Everything that’s overdue, due today, or due tomorrow, all in one place. Check things off as you finish them.</p>
+  <div class="legend" aria-label="Color key"><span><i style="background:var(--rose)"></i>Overdue</span><span><i style="background:var(--sun)"></i>Due today or tomorrow</span><span><i style="background:var(--later)"></i>Later</span></div>
+  <div id="dueList"></div>
 </section>
 
 <!-- HELP ME START -->
@@ -288,7 +321,7 @@ details .try b{font-weight:600}
         <li>Paste the link into a new browser tab. It downloads a file ending in <b>.ics</b>.</li>
         <li>Come back here and choose that file below.</li>
       </ol>
-      <p class="hint" style="margin-top:0">If your browser tries to open it in a calendar app instead, try Chrome. Canvas doesn’t say what you’ve turned in, so check things off here as you finish them.</p>
+      <p class="hint" style="margin-top:0">If your browser tries to open it in a calendar app instead, try Chrome. Only assignments due today or later come in, and old ones are cleared each time you import. Canvas doesn’t say what you’ve turned in, so check things off here as you finish them.</p>
     </details>
     <div class="row" style="margin-top:.5rem">
       <input type="file" id="icsFile" class="vh" accept=".ics,text/calendar">
@@ -297,6 +330,7 @@ details .try b{font-weight:600}
     </div>
     <p class="import-msg" id="importMsg" aria-live="polite"></p>
   </div>
+  <div class="legend" aria-label="Color key" style="margin-top:1.25rem"><span><i style="background:var(--rose)"></i>Overdue</span><span><i style="background:var(--sun)"></i>Due today or tomorrow</span><span><i style="background:var(--later)"></i>Later</span></div>
   <div id="list"></div>
 </section>
 
@@ -392,9 +426,10 @@ function dueLabel(s){const n=diff(s);
 $('#pDate').value=iso(addDays(today(),5));
 
 /* routing */
-const views=['today','start','assignments','tests','strategies','calm'];
+const views=['today','due','start','assignments','tests','strategies','calm'];
 function route(){let v=location.hash.slice(1);if(!views.includes(v))v='today';
   document.querySelectorAll('section[data-view]').forEach(s=>s.classList.toggle('on',s.dataset.view===v));
+  document.documentElement.style.setProperty('--secnow','var(--c-'+v+')');
   document.querySelectorAll('nav a').forEach(a=>{if(a.getAttribute('href')==='#'+v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   window.scrollTo(0,0);}
 addEventListener('hashchange',route);
@@ -414,28 +449,28 @@ $('#addForm').addEventListener('submit',e=>{e.preventDefault();const ty=$('#aTyp
 const openReq=new Set();let canImg=false;
 const cleanList=arr=>(Array.isArray(arr)?arr:[]).map(s=>String(s).trim()).filter(Boolean).slice(0,30);
 const parseLines=txt=>txt.split(/\n+/).map(s=>s.replace(/^\s*([-*\u2022\u25cf\u25aa\u25e6]|\d+[.)]|[a-zA-Z][.)])\s+/,'').trim()).filter(s=>s.length>2).slice(0,40);
-function reqHTML(a){if(a.type==='test'||a.type==='quiz')return '';
+function reqHTML(a,c){c=c||'';if(a.type==='test'||a.type==='quiz')return '';
   const r=a.reqs||[];const dn=r.filter(x=>x.done).length;let h='';
   if(r.length)h+=`<div class="reqs-h">Must include (${dn} of ${r.length} done)</div><ul class="steps reqs">${r.map((x,i)=>`<li class="${x.done?'d':''}"><input type="checkbox" class="check" data-act="reqcheck" data-id="${a.id}" data-i="${i}" ${x.done?'checked':''} aria-label="Requirement done: ${esc(x.t)}"><span>${esc(x.t)}</span><button class="x" data-act="delreq" data-id="${a.id}" data-i="${i}" aria-label="Remove requirement: ${esc(x.t)}">×</button></li>`).join('')}</ul>`;
   if(a.done)return h;
-  if(openReq.has(a.id)){h+=`<div class="reqbox"><label for="rt-${a.id}">Paste the rubric or instructions. Each line becomes a checklist item.</label>
-    <textarea id="rt-${a.id}" placeholder="Thesis in the first paragraph&#10;At least 3 sources, cited in MLA&#10;Two pages, double spaced"></textarea>
+  if(openReq.has(a.id)){h+=`<div class="reqbox"><label for="rt-${c}${a.id}">Paste the rubric or instructions. Each line becomes a checklist item.</label>
+    <textarea id="rt-${c}${a.id}" placeholder="Thesis in the first paragraph&#10;At least 3 sources, cited in MLA&#10;Two pages, double spaced"></textarea>
     <div class="row" style="margin-top:.5rem"><button class="btn small" data-act="reqmake" data-id="${a.id}" type="button">Make checklist</button>
-    ${canImg?`<input type="file" accept="image/*" multiple class="vh" id="ri-${a.id}" data-reqimg="${a.id}"><label for="ri-${a.id}" class="btn ghost small" style="color:var(--accent)">Upload a photo</label>`:''}
+    ${canImg?`<input type="file" accept="image/*" multiple class="vh" id="ri-${c}${a.id}" data-reqimg="${a.id}"><label for="ri-${c}${a.id}" class="btn ghost small" style="color:var(--accent)">Upload a photo</label>`:''}
     <button class="icon" data-act="req" data-id="${a.id}" type="button">Close</button></div>
     ${canImg?'<p class="hint">Or upload a photo or screenshot of the rubric, assignment sheet, or your notes. It’s sent to Claude, which pulls out what to include and suggests steps.</p>':''}
-    <p class="import-msg" id="rm-${a.id}" aria-live="polite"></p></div>`}
+    <p class="import-msg" data-rm="${a.id}" aria-live="polite"></p></div>`}
   else h+=`<button class="icon" data-act="req" data-id="${a.id}" style="color:var(--accent);padding-left:0;display:block">${r.length?'Add more requirements':'Add rubric or instructions'}</button>`;
   return h;}
-function itemHTML(a){const d=dueLabel(a.due);
+function itemHTML(a,c){c=typeof c==='string'?c:'';const d=dueLabel(a.due);
   const steps=a.steps.map((s,i)=>`<li class="${s.done?'d':''}"><input type="checkbox" class="check" data-act="step" data-id="${a.id}" data-i="${i}" ${s.done?'checked':''} aria-label="Step done: ${esc(s.t)}"><span>${esc(s.t)}</span><button class="x" data-act="delstep" data-id="${a.id}" data-i="${i}" aria-label="Remove step: ${esc(s.t)}">×</button></li>`).join('');
-  return `<div class="item ${a.done?'done':''}">
+  return `<div class="item ${a.done?'done':'u-'+d.c}">
     <input type="checkbox" class="check" data-act="done" data-id="${a.id}" ${a.done?'checked':''} aria-label="Mark done: ${esc(a.title)}">
     <div><div class="t">${esc(a.title)}</div>
       <div class="sub">${a.done?'':`<span class="tag ${d.c}">${d.t}</span>`}${TYPES[a.type]?`<span class="tag big">${TYPES[a.type]}</span>`:''}${a.size==='l'&&a.type!=='project'&&a.type!=='paper'?'<span class="tag big">Big</span>':''}${esc(a.cls||'')}</div>
       ${steps?`<ul class="steps">${steps}</ul>`:''}
       ${!a.done&&(a.type==='test'||a.type==='quiz')?(S.plans.some(p=>p.aid===a.id)?'<a href="#tests" class="icon" style="color:var(--mint);padding-left:0;text-decoration:none;display:inline-block">Study plan ready</a>':`<button class="icon" data-act="plan" data-id="${a.id}" style="color:var(--accent);padding-left:0">Make a study plan</button>`):''}
-      ${reqHTML(a)}
+      ${reqHTML(a,c)}
       ${a.done?'':`<form class="addstep" data-id="${a.id}"><input type="text" placeholder="${a.size==='l'&&!a.steps.length?'Big one. What’s the tiniest first step?':'Add a step'}" aria-label="Add a step to ${esc(a.title)}"><button class="btn small" type="submit">Add</button></form>`}
     </div>
     <button class="icon" data-act="del" data-id="${a.id}" aria-label="Delete ${esc(a.title)}">Delete</button>
@@ -456,19 +491,19 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.datase
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.tagName==='INPUT')return;
   if(t.dataset.act==='del'){S.assignments=S.assignments.filter(x=>x.id!==t.dataset.id);save();renderAll()}
   {const a=S.assignments.find(x=>x.id===t.dataset.id);const act=t.dataset.act;
-    if(a&&act==='req'){if(openReq.has(a.id))openReq.delete(a.id);else openReq.add(a.id);renderList();const ta=document.getElementById('rt-'+a.id);if(ta)ta.focus()}
-    if(a&&act==='reqmake'){const ta=document.getElementById('rt-'+a.id);const lines=parseLines(ta?ta.value:'');
-      if(!lines.length){const m=document.getElementById('rm-'+a.id);if(m){m.textContent='Paste at least one line first.';m.className='import-msg err'}return}
+    if(a&&act==='req'){if(openReq.has(a.id))openReq.delete(a.id);else openReq.add(a.id);renderAll();const sec=document.querySelector('section[data-view].on');const ta=sec&&sec.querySelector('.reqbox textarea');if(ta)ta.focus()}
+    if(a&&act==='reqmake'){const box=t.closest('.reqbox');const ta=box&&box.querySelector('textarea');const lines=parseLines(ta?ta.value:'');
+      if(!lines.length){const m=box&&box.querySelector('[data-rm]');if(m){m.textContent='Paste at least one line first.';m.className='import-msg err'}return}
       a.reqs=(a.reqs||[]).concat(lines.map(x=>({t:x,done:false})));openReq.delete(a.id);save();renderAll()}
     if(a&&act==='delstep'){a.steps.splice(+t.dataset.i,1);save();renderAll()}
     if(a&&act==='delreq'&&a.reqs){a.reqs.splice(+t.dataset.i,1);save();renderAll()}}
   if(t.dataset.act==='plan'){const a=S.assignments.find(x=>x.id===t.dataset.id);if(a){planFor=a.id;$('#pName').value=a.title+(a.cls?' ('+a.cls+')':'');$('#pDate').value=a.due;location.hash='tests';setTimeout(()=>$('#pTopics').focus(),60)}}
   if(t.dataset.act==='delplan'){S.plans=S.plans.filter(x=>x.id!==t.dataset.id);save();renderAll()}
-  if(t.dataset.act==='start'){startTimer(+t.dataset.min)}
+  if(t.dataset.act==='start'){startTimer(+t.dataset.min,t.dataset.label)}
 });
 document.addEventListener('submit',e=>{const f=e.target;if(!f.classList.contains('addstep'))return;e.preventDefault();
   const v=f.querySelector('input').value.trim();if(!v)return;const a=S.assignments.find(x=>x.id===f.dataset.id);
-  if(a){a.steps.push({t:v,done:false});save();renderAll();const nf=document.querySelector(`.addstep[data-id="${a.id}"] input`);if(nf)nf.focus()}});
+  if(a){a.steps.push({t:v,done:false});save();renderAll();const nf=(document.querySelector('section[data-view].on')||document).querySelector(`.addstep[data-id="${a.id}"] input`);if(nf)nf.focus()}});
 
 /* focus card */
 function renderFocus(){const a=nextUp();const b=$('#focusBody');
@@ -479,13 +514,13 @@ function renderFocus(){const a=nextUp();const b=$('#focusBody');
     <a href="#start" class="stuck">Stuck? Get help starting</a></div>`;
   if(!a){b.innerHTML=`<p class="q">Your next step</p><p class="task">You’re all caught up.</p><p class="meta">Add anything new below as soon as you hear about it. Or use the time to get ahead on a test plan.</p>`+startBtns;return}
   const d=dueLabel(a.due);const st=a.steps.find(s=>!s.done);
-  b.innerHTML=`<p class="q">Your next step</p><p class="task">${esc(a.title)}</p>
-    <p class="meta">${d.t}${a.cls?' · '+esc(a.cls):''}</p>
+  b.innerHTML=`<p class="q">Your next step</p><span class="pill u-${d.c}">${d.t}</span><p class="task">${esc(a.title)}</p>
+    <p class="meta">${esc(a.cls||'')}</p>
     ${st?`<div class="step">First, just this: <b>${esc(st.t)}</b></div>`:(a.size==='l'?`<div class="step">This one’s big. Try breaking it into steps on the Assignments tab first.</div>`:'')}`+startBtns;}
 
 /* timer */
 let tEnd=0,tTotal=0,tInt=null,tLabel='';const C=2*Math.PI*44;$('#prog').style.strokeDasharray=C;
-function startTimer(min,label){if(label!==undefined)tLabel=label||'';tTotal=min*60;tEnd=Date.now()+tTotal*1000;$('#focusBody').style.display='none';$('#timer').classList.add('on');
+function startTimer(min,label){if(label!==undefined)tLabel=label||'';tTotal=min*60;tEnd=Date.now()+tTotal*1000;$('#focusBody').style.display='none';$('#timer').classList.add('on');window.scrollTo(0,0);
   $('#timerMsg').textContent=tLabel?'Just this: '+tLabel+'. Everything else can wait.':'Just this. Everything else can wait. Phone face down?';
   $('#timerBtns').innerHTML='<button class="btn ghost" id="stopT">Stop</button>';$('#stopT').onclick=stopTimer;
   clearInterval(tInt);tick();tInt=setInterval(tick,250);}
@@ -529,9 +564,37 @@ function renderPlans(){const el=$('#plans');
       <button class="icon" data-act="delplan" data-id="${p.id}" aria-label="Delete plan ${esc(p.name)}">Delete</button></header>
       <ul class="days">${p.days.map((d,i)=>`<li class="${d.done?'d':''} ${d.date===ts?'today':''}"><div class="when">${d.date===ts?'Today':dayName(d.date)}</div><div class="what">${esc(d.what)}</div>
         <label class="c"><input type="checkbox" class="check" data-act="session" data-id="${p.id}" data-i="${i}" ${d.done?'checked':''}> Done</label></li>`).join('')}</ul></div>`}).join('');}
-function renderTodaySessions(){const ts=iso(today());const list=[];
-  S.plans.forEach(p=>p.days.forEach((d,i)=>{if(d.date===ts&&!d.done)list.push({p,d,i})}));
-  $('#todaySessions').innerHTML=list.length?`<div class="panel"><h3>Today’s study sessions</h3>${list.map(x=>`<div class="item" style="background:var(--bg)"><input type="checkbox" class="check" data-act="session" data-id="${x.p.id}" data-i="${x.i}" aria-label="Session done"><div><div class="t">${esc(x.p.name)}</div><div class="sub">${esc(x.d.what)}</div></div><span></span></div>`).join('')}</div>`:'';}
+const LEGEND='<div class="legend" aria-label="Color key"><span><i style="background:var(--rose)"></i>Overdue</span><span><i style="background:var(--sun)"></i>Due today or tomorrow</span><span><i style="background:var(--later)"></i>Later</span></div>';
+function renderTodaySessions(){const ts=iso(today());const tm=iso(addDays(today(),1));const f=nextUp();
+  /* coming up: a short list */
+  const up=sorted().filter(a=>!a.done&&(!f||a.id!==f.id)).slice(0,3);
+  const dueCount=S.assignments.filter(a=>!a.done&&a.due<=tm).length;
+  $('#dueSoon').innerHTML=up.length?`<div class="panel"><h3>Coming up</h3>${LEGEND}${up.map(a=>{const d=dueLabel(a.due);return `<div class="item u-${d.c}" style="background:var(--bg)"><input type="checkbox" class="check" data-act="done" data-id="${a.id}" aria-label="Mark done: ${esc(a.title)}"><div><div class="t">${esc(a.title)}</div><div class="sub"><span class="tag ${d.c}">${d.t}</span>${esc(a.cls||'')}</div></div><span></span></div>`}).join('')}
+    ${dueCount?`<a href="#due" class="icon" style="color:var(--accent);padding-left:0;text-decoration:none;display:inline-block">See everything due by tomorrow (${dueCount})</a>`:''}</div>`:'';
+  /* next test or quiz */
+  const a=sorted().find(x=>!x.done&&(x.type==='test'||x.type==='quiz')&&diff(x.due)>=0);
+  const others=S.plans.filter(p=>!a||p.aid!==a.id).reduce((n,p)=>n+p.days.filter(d=>d.date===ts&&!d.done).length,0);
+  const more=others?`<p class="hint">Plus ${others} more study session${others===1?'':'s'} today in <a href="#tests" style="color:var(--accent)">Test plans</a>.</p>`:'';
+  if(!a){$('#todaySessions').innerHTML=more?`<div class="panel"><h3>Studying today</h3>${more}</div>`:'';return}
+  const n=diff(a.due);const when=n===0?'today':n===1?'tomorrow':'in '+n+' days';
+  const p=S.plans.find(x=>x.aid===a.id);let body='';
+  if(p){const i=p.days.findIndex(d=>d.date===ts);const d=p.days[i];
+    if(d&&!d.done)body=`<p class="t" style="margin-bottom:.25rem">Spend ${p.min} minutes studying today.</p><p class="sub">${esc(d.what)}</p>
+      <div class="row"><button class="btn small" data-act="start" data-min="${p.min}" data-label="${esc(a.title)}">Start ${p.min} minutes</button>
+      <label class="c" style="display:inline-flex;gap:.45rem;align-items:center;color:var(--ink);margin:0;cursor:pointer"><input type="checkbox" class="check" data-act="session" data-id="${p.id}" data-i="${i}" style="width:1.25rem;height:1.25rem"> Done</label></div>`;
+    else if(d&&d.done)body=`<p class="t">You did today’s study session. Nice work.</p>`;
+    else{const nx=p.days.find(x=>x.date>ts&&!x.done);body=`<p class="t">${nx?'Your study plan starts '+dayName(nx.date)+'.':'Your study plan is all set.'}</p>`}
+    body+=`<a href="#tests" class="icon" style="color:var(--accent);padding-left:0;text-decoration:none;display:inline-block;margin-top:.4rem">See your study plan</a>`}
+  else{let m=a.type==='quiz'?15:25;if(n>0&&n<=2)m+=15;if(n===0)m=10;
+    const tip=n===0?'Do a quick review of your trickiest topic before it starts.':n<=2?'It’s close, so give it a little more time today.':'A little each day beats cramming. A study plan spreads it out for you.';
+    body=`<p class="t" style="margin-bottom:.25rem">Spend ${m} minutes studying today.</p><p class="sub">${tip}</p>
+      <div class="row"><button class="btn small" data-act="start" data-min="${m}" data-label="${esc(a.title)}">Start ${m} minutes</button>${n>0?`<button class="icon" data-act="plan" data-id="${a.id}" style="color:var(--accent)">Make a study plan</button>`:''}</div>`}
+  $('#todaySessions').innerHTML=`<div class="panel u-${n<=1?'soon':'ok'}"><h3>Next test or quiz</h3><p style="margin-bottom:.6rem"><b style="font-weight:600">${esc(a.title)}</b> is ${when}${a.cls?' ('+esc(a.cls)+')':''}.</p>${body}${more}</div>`;}
+function renderDue(){const tm=iso(addDays(today(),1));const ts=iso(today());
+  const items=sorted().filter(a=>!a.done&&a.due<=tm);const el=$('#dueList');
+  if(!items.length){el.innerHTML='<div class="empty">Nothing due today or tomorrow. Nice. Want to get ahead? Check your <a href="#tests" style="color:var(--accent)">test plans</a> or the <a href="#assignments" style="color:var(--accent)">full assignment list</a>.</div>';return}
+  const g=[['Catch up on these',items.filter(a=>a.due<ts)],['Due today',items.filter(a=>a.due===ts)],['Due tomorrow',items.filter(a=>a.due===tm)]];
+  el.innerHTML=g.filter(x=>x[1].length).map(x=>`<h3 class="group">${x[0]}</h3>`+x[1].map(a=>itemHTML(a,'d-')).join('')).join('');}
 
 /* strategies */
 const STRATS=[
@@ -625,7 +688,7 @@ function photoError(e){const c=e&&e.code;
 async function maxImgs(){try{const l=await sampleFn.limits();return l&&l.images?l.images.maxCount:1}catch(e){return 1}}
 document.addEventListener('change',async e=>{const inp=e.target;const id=inp.dataset&&inp.dataset.reqimg;if(!id||!sampleFn)return;
   const files=Array.from(inp.files||[]);if(!files.length)return;const a=S.assignments.find(x=>x.id===id);if(!a)return;
-  const setM=(txt,c)=>{const el=document.getElementById('rm-'+id);if(el){el.textContent=txt;el.className='import-msg '+(c||'')}};
+  const setM=(txt,c)=>{document.querySelectorAll('[data-rm="'+id+'"]').forEach(el=>{el.textContent=txt;el.className='import-msg '+(c||'')})};
   setM('Reading your photo…');
   const prompt='These images are a rubric, assignment sheet, or notes for a high school assignment titled "'+a.title+'"'+(a.cls?' for '+a.cls:'')+'. Read them carefully. Return two lists. "requirements": each concrete thing the finished work must include or do, in plain words a teenager understands, each under 15 words, with point values in parentheses if shown. "steps": 4 to 8 small work steps in order for a student with ADHD, each under 14 words, the first one taking under 2 minutes. Use only what is in the images. If they are unreadable or not schoolwork, return empty lists. Respond with only JSON: {"requirements":["..."],"steps":["..."]}';
   try{const r=await sampleFn.json(prompt,{images:files.slice(0,await maxImgs())});
@@ -661,7 +724,8 @@ function importMsg(t,cls){const el=$('#importMsg');el.textContent=t;el.className
 function importICS(text){
   const evs=parseICS(text);
   if(!evs.length){importMsg('That file doesn’t have any calendar events in it. Make sure it’s the .ics file from Canvas’s Calendar Feed link.','err');return}
-  const cutoff=iso(addDays(today(),-7));let added=0,updated=0,old=0;
+  const cutoff=iso(today());let added=0,updated=0,old=0;
+  const before=S.assignments.length;S.assignments=S.assignments.filter(a=>!(a.src==='canvas'&&a.due<cutoff&&!a.steps.length&&!(a.reqs&&a.reqs.length)));const cleared=before-S.assignments.length;
   evs.forEach(ev=>{const due=icsDate(ev.DTSTART||ev.DTEND);if(!due)return;
     if(due<cutoff){old++;return}
     let title=unesc(ev.SUMMARY||'Untitled');let cls='';
@@ -671,14 +735,15 @@ function importICS(text){
     if(ex){if(ex.title!==title||ex.due!==due||ex.cls!==cls){ex.title=title;ex.due=due;ex.cls=cls;updated++}}
     else{S.assignments.push({id:uid(),uid:key,src:'canvas',title,cls,due,size:'m',type:guessType(title),done:false,steps:[]});added++}});
   S.lastImport=iso(today());save();renderAll();
-  if(!added&&!updated)importMsg('You’re up to date. Nothing new since your last import.','ok');
-  else importMsg('Added '+added+' new'+(updated?', updated '+updated:'')+'. Pick the biggest one and break it into small steps.','ok');}
+  const cl=cleared?' Cleared '+cleared+' past-due Canvas item'+(cleared===1?'':'s')+'.':'';
+  if(!added&&!updated)importMsg('You’re up to date. Nothing new since your last import.'+cl,'ok');
+  else importMsg('Added '+added+' new'+(updated?', updated '+updated:'')+'. Pick the biggest one and break it into small steps.'+cl,'ok');}
 $('#icsFile').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
   try{importICS(await f.text())}catch(err){importMsg('Couldn’t read that file. Try downloading it again from Canvas.','err')}
   e.target.value='';});
 function renderImport(){$('#lastImport').textContent=S.lastImport?'Last imported '+(S.lastImport===iso(today())?'today':dayName(S.lastImport)):''}
 
-function renderAll(){renderFocus();renderList();renderPlans();renderTodaySessions();renderImport();renderStartChips()}
+function renderAll(){renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
 renderAll();route();
 })();
 </script>
