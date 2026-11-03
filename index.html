@@ -48,7 +48,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .wrap{max-width:46rem;margin:0 auto;padding:0 1.25rem}
 
 /* header */
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:3px solid var(--secnow,var(--line));transition:border-color .2s}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg)}
 .bar{display:flex;align-items:center;gap:1rem;padding:.9rem 0 .6rem}
 .logo{font-weight:700;font-size:1.15rem;letter-spacing:-.01em;display:flex;align-items:center;gap:.5rem}
 .logo .dot{width:.85rem;height:.85rem;border-radius:50%;background:var(--accent);box-shadow:1.1rem 0 0 -.15rem var(--accent-soft)}
@@ -345,6 +345,7 @@ details .try b{font-weight:600}
       <div style="grid-column:1/-1"><label for="pTopics">What’s on it? One topic per line</label>
         <textarea id="pTopics" placeholder="Balancing equations&#10;Mole conversions&#10;Limiting reactants" required></textarea>
         <p class="hint">Not sure? Check the study guide, the unit’s slides, or ask your teacher what to focus on.</p>
+        <div class="row" style="margin-top:.6rem"><input type="file" accept=".pdf,.docx,.txt,application/pdf,text/plain" class="vh" id="pFile"><label for="pFile" class="btn ghost small" style="color:var(--accent)">Upload a study guide file</label><span class="import-msg" id="pFileMsg" aria-live="polite" style="margin:0"></span></div>
         <div id="pImgWrap" class="row" style="margin-top:.6rem" hidden><input type="file" accept="image/*" multiple class="vh" id="pImg"><label for="pImg" class="btn ghost small" style="color:var(--accent)">Fill topics from a study guide photo</label><span class="import-msg" id="pImgMsg" aria-live="polite" style="margin:0"></span></div></div>
       <div><label for="pMin">Minutes per day</label>
         <select id="pMin"><option>15</option><option selected>25</option><option>40</option></select></div>
@@ -456,9 +457,10 @@ function reqHTML(a,c){c=c||'';if(a.type==='test'||a.type==='quiz')return '';
   if(openReq.has(a.id)){h+=`<div class="reqbox"><label for="rt-${c}${a.id}">Paste the rubric or instructions. Each line becomes a checklist item.</label>
     <textarea id="rt-${c}${a.id}" placeholder="Thesis in the first paragraph&#10;At least 3 sources, cited in MLA&#10;Two pages, double spaced"></textarea>
     <div class="row" style="margin-top:.5rem"><button class="btn small" data-act="reqmake" data-id="${a.id}" type="button">Make checklist</button>
+    <input type="file" accept=".pdf,.docx,.txt,application/pdf,text/plain" class="vh" id="rf-${c}${a.id}" data-reqfile="${a.id}"><label for="rf-${c}${a.id}" class="btn ghost small" style="color:var(--accent)">Upload a file</label>
     ${canImg?`<input type="file" accept="image/*" multiple class="vh" id="ri-${c}${a.id}" data-reqimg="${a.id}"><label for="ri-${c}${a.id}" class="btn ghost small" style="color:var(--accent)">Upload a photo</label>`:''}
     <button class="icon" data-act="req" data-id="${a.id}" type="button">Close</button></div>
-    ${canImg?'<p class="hint">Or upload a photo or screenshot of the rubric, assignment sheet, or your notes. It’s sent to Claude, which pulls out what to include and suggests steps.</p>':''}
+    <p class="hint">Upload a PDF or Word file of the assignment sheet or rubric, and its text appears in the box. Delete anything that isn’t a requirement, then tap Make checklist.${canImg?' Or upload a photo, and Claude will pull out the requirements and suggest steps.':''}</p>
     <p class="import-msg" data-rm="${a.id}" aria-live="polite"></p></div>`}
   else h+=`<button class="icon" data-act="req" data-id="${a.id}" style="color:var(--accent);padding-left:0;display:block">${r.length?'Add more requirements':'Add rubric or instructions'}</button>`;
   return h;}
@@ -677,6 +679,43 @@ $('#stAIbtn').onclick=async()=>{if(!sampleFn)return;const t=stTask();if(!t)retur
   }catch(e){if(e&&e.code==='not_granted'){out.textContent='';sampleFn=null;updateAI();return}
     out.textContent='Couldn’t get steps right now. Your tiny first step above still works.'}
   finally{btn.disabled=false}};
+
+/* read PDF, Word or text files in the browser (nothing is uploaded) */
+const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',PDFW='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',MAMMOTH='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+function loadScript(src){return new Promise((res,rej)=>{const ex=document.querySelector('script[src="'+src+'"]');if(ex&&ex.dataset.ok)return res();const s=ex||document.createElement('script');s.addEventListener('load',()=>{s.dataset.ok='1';res()});s.addEventListener('error',()=>rej({code:'load'}));if(!ex){s.src=src;document.head.appendChild(s)}})}
+async function fileText(f){const n=(f.name||'').toLowerCase();
+  if(n.endsWith('.txt')||(f.type||'').startsWith('text/'))return await f.text();
+  if(n.endsWith('.docx')){await loadScript(MAMMOTH);const r=await window.mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()});return r.value||''}
+  if(n.endsWith('.pdf')||f.type==='application/pdf'){await loadScript(PDFJS);const lib=window.pdfjsLib;lib.GlobalWorkerOptions.workerSrc=PDFW;
+    const pdf=await lib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;const out=[];
+    for(let p=1;p<=Math.min(pdf.numPages,10);p++){const pg=await pdf.getPage(p);const tc=await pg.getTextContent();let line='',lastY=null;
+      tc.items.forEach(it=>{const y=Math.round(it.transform[5]);if(lastY!==null&&Math.abs(y-lastY)>2){out.push(line);line=''}line+=it.str;lastY=y;if(it.hasEOL){out.push(line);line='';lastY=null}});
+      if(line)out.push(line)}
+    return out.join('\n')}
+  if(n.endsWith('.doc'))throw {code:'doc'};
+  throw {code:'type'}}
+function fileErr(e){const c=e&&e.code;
+  if(c==='doc')return 'Older .doc files can’t be read. Save it as .docx or PDF, or copy and paste the text.';
+  if(c==='type')return 'That file type can’t be read. Try a PDF, Word (.docx), or text file.';
+  if(c==='empty')return 'No text found in that file. If it’s a scanned sheet, copy the text with your phone’s camera and paste it instead.';
+  if(c==='load')return 'Couldn’t open the file reader. Check your internet connection and try again.';
+  return 'Couldn’t read that file. Try copying and pasting the text instead.';}
+const textLines=t=>t.split(/\n+/).map(s=>s.replace(/\s+/g,' ').trim()).filter(s=>s.length>1);
+document.addEventListener('change',async e=>{const inp=e.target;if(!inp.dataset||!inp.dataset.reqfile)return;const f=inp.files&&inp.files[0];if(!f)return;
+  const box=inp.closest('.reqbox');const ta=box&&box.querySelector('textarea');const m=box&&box.querySelector('[data-rm]');
+  const setM=(t,c)=>{if(m){m.textContent=t;m.className='import-msg '+(c||'')}};setM('Reading your file…');
+  try{const lines=textLines(await fileText(f));if(!lines.length)throw {code:'empty'};
+    if(ta){ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+lines.join('\n');ta.style.minHeight='12rem';ta.focus();ta.scrollTop=0}
+    setM('Here’s the text from your file. Delete anything that isn’t a requirement, like titles or directions, then tap Make checklist.','ok');
+  }catch(err){setM(fileErr(err),'err')}
+  inp.value='';});
+$('#pFile').addEventListener('change',async e=>{const inp=e.target;const f=inp.files&&inp.files[0];if(!f)return;const m=$('#pFileMsg');
+  m.className='import-msg';m.textContent='Reading your file…';
+  try{const lines=textLines(await fileText(f)).slice(0,40);if(!lines.length)throw {code:'empty'};
+    const ta=$('#pTopics');ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+lines.join('\n');ta.style.minHeight='12rem';
+    m.className='import-msg ok';m.textContent='Added the text. Delete anything that isn’t a topic before making your plan.';
+  }catch(err){m.className='import-msg err';m.textContent=fileErr(err)}
+  inp.value='';});
 
 /* photo reading (only inside Claude) */
 function photoError(e){const c=e&&e.code;
