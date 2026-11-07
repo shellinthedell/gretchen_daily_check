@@ -74,6 +74,13 @@ main{padding:1.75rem 0 4rem}
 section[data-view]{display:none}
 section[data-view].on{display:block}
 .intro{color:var(--muted);max-width:50rem;margin-bottom:1.5rem}
+.rv{display:grid;grid-template-columns:auto minmax(0,1fr) 10rem 8.5rem;gap:.5rem;align-items:center;padding:.5rem 0;border-top:1px solid var(--line)}
+.rv input[type=text],.rv input[type=date],.rv select{min-height:2.4rem;padding:.35rem .55rem;font-size:.92rem}
+.rv.off .rv-t,.rv.off input[type=date],.rv.off select{opacity:.45}
+@media (max-width:640px){.rv{grid-template-columns:auto 1fr 1fr}.rv .check{grid-row:span 2}.rv .rv-t{grid-column:2 / span 2}}
+.colrow{display:grid;grid-template-columns:minmax(0,1fr) 16rem;gap:.6rem;align-items:center;padding:.45rem 0;border-top:1px solid var(--line)}
+.colrow select{min-height:2.4rem;padding:.35rem .55rem;font-size:.92rem}
+@media (max-width:640px){.colrow{grid-template-columns:1fr}}
 .today-grid{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));align-items:start;margin-bottom:1.25rem}
 .today-grid > :empty{display:none}
 .today-grid .panel{margin-bottom:0}
@@ -317,6 +324,20 @@ details .try b{font-weight:600}
     <p class="import-msg ok" id="addMsg" aria-live="polite"></p>
   </div>
   <div class="panel">
+    <h3>Add from an assignment sheet</h3>
+    <p class="sub">Got a sheet with a few weeks of work? Upload it (PDF, Word, Excel, or CSV) and the site finds each assignment and its due date. You’ll check everything before it’s added.</p>
+    <div class="grid two" style="margin-top:.75rem">
+      <div><label for="bulkClass">Class (optional)</label><input type="text" id="bulkClass" placeholder="English 10" autocomplete="off"></div>
+      <div class="row" style="align-self:end"><input type="file" accept=".pdf,.docx,.txt,.csv,.tsv,.xlsx,.xls,application/pdf,text/plain,text/csv" class="vh" id="bulkFile"><label for="bulkFile" class="btn">Upload assignment sheet</label></div>
+    </div>
+    <details style="border:0;background:none;margin:.5rem 0 0"><summary style="padding:.5rem 0;font-size:.95rem;color:var(--accent)">Or paste it instead (you can copy cells straight from Google Sheets or Excel)</summary>
+      <textarea id="bulkPaste" placeholder="Mon 11/10  Read chapter 5&#10;Wed 11/12  Vocab quiz&#10;Fri 11/14  Essay outline due"></textarea>
+      <button class="btn small" id="bulkFind" type="button" style="margin-top:.5rem">Find assignments</button>
+    </details>
+    <p class="import-msg" id="bulkMsg" aria-live="polite"></p>
+    <div id="bulkReview"></div>
+  </div>
+  <div class="panel">
     <h3>Import from Canvas</h3>
     <p class="sub" style="margin-bottom:.25rem">Pull in every due date from all your classes at once. Re-import every Sunday to catch new assignments. Anything you’ve checked off or broken into steps stays the way you left it.</p>
     <details style="border:0;background:none;margin:0"><summary style="padding:.5rem 0;font-size:.95rem;color:var(--accent)">How to get your Canvas calendar file</summary>
@@ -467,7 +488,7 @@ function reqHTML(a,c){c=c||'';if(a.type==='test'||a.type==='quiz')return '';
     <button class="icon" data-act="req" data-id="${a.id}" type="button">Close</button></div>
     <p class="hint">Upload a PDF or Word file of the assignment sheet or rubric, and its text appears in the box. Delete anything that isn’t a requirement, then tap Make checklist.${canImg?' Or upload a photo, and Claude will pull out the requirements and suggest steps.':''}</p>
     <p class="import-msg" data-rm="${a.id}" aria-live="polite"></p></div>`}
-  else h+=`<button class="icon" data-act="req" data-id="${a.id}" style="color:var(--accent);padding-left:0;display:block">${r.length?'Add more requirements':'Add rubric or instructions'}</button>`;
+  else h+=`<button class="btn ghost small" data-act="req" data-id="${a.id}" style="color:var(--accent);margin-top:.6rem">${r.length?'Add more from an assignment sheet':'Add assignment sheet or rubric'}</button>`;
   return h;}
 function itemHTML(a,c){c=typeof c==='string'?c:'';const d=dueLabel(a.due);
   const steps=a.steps.map((s,i)=>`<li class="${s.done?'d':''}"><input type="checkbox" class="check" data-act="step" data-id="${a.id}" data-i="${i}" ${s.done?'checked':''} aria-label="Step done: ${esc(s.t)}"><span>${esc(s.t)}</span><button class="x" data-act="delstep" data-id="${a.id}" data-i="${i}" aria-label="Remove step: ${esc(s.t)}">×</button></li>`).join('');
@@ -721,6 +742,126 @@ $('#pFile').addEventListener('change',async e=>{const inp=e.target;const f=inp.f
     m.className='import-msg ok';m.textContent='Added the text. Delete anything that isn’t a topic before making your plan.';
   }catch(err){m.className='import-msg err';m.textContent=fileErr(err)}
   inp.value='';});
+
+/* assignment sheet -> many assignments */
+const MONTHS={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+const RX_NAME=/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?\b/i;
+const RX_NUM=/(?:^|[^\d\/])(\d{1,2})\/(\d{1,2})(?:\/(\d{4}|\d{2}))?(?![\d\/])(?!\s*(?:pages?|hours?|cups?|of|inch|in\.)\b)/;
+const RX_DAY=/\b(mon|tues?|wed(?:nes)?|thu(?:rs?)?|fri|sat(?:ur)?|sun)(?:day)?\b\.?,?/gi;
+const TYPELIST=[['hw','Homework'],['test','Test'],['quiz','Quiz'],['project','Project'],['paper','Paper'],['other','Other']];
+let bulk=[],bulkText='',tbl=null;
+function mkDate(y,m,d){if(m<0||m>11||d<1||d>31)return null;const dt=new Date(y,m,d);return dt.getMonth()===m?dt:null}
+function inferYear(m,d){const t=today();let dt=mkDate(t.getFullYear(),m,d);if(!dt)return null;const off=(dt-t)/864e5;
+  if(off<-120)dt=mkDate(t.getFullYear()+1,m,d);else if(off>240)dt=mkDate(t.getFullYear()-1,m,d);return dt}
+function findDate(line){let m=RX_NAME.exec(line);
+  if(m){const mo=MONTHS[m[1].slice(0,3).toLowerCase()];const dt=m[3]?mkDate(+m[3],mo,+m[2]):inferYear(mo,+m[2]);if(dt)return {date:iso(dt),match:m[0]}}
+  m=RX_NUM.exec(line);
+  if(m){const mo=+m[1]-1,d=+m[2];const y=m[3]?(m[3].length===2?2000+ +m[3]:+m[3]):null;const dt=y?mkDate(y,mo,d):inferYear(mo,d);if(dt)return {date:iso(dt),match:m[0].replace(/^[^\d]/,'')}}
+  return null}
+const cleanTitle=s=>s.replace(RX_DAY,' ').replace(/\b(due( date)?|date|week\s*\d+)\b\s*:?/gi,' ').replace(/\(\s*\)/g,'').replace(/^[\s\-\u2013\u2014:|,.\u2022*]+|[\s\-\u2013\u2014:|,.]+$/g,'').replace(/\s{2,}/g,' ').trim().slice(0,140);
+function parseSchedule(text){const out=[];let cur=null;
+  textLines(text).forEach(ln=>{const f=findDate(ln);
+    if(f){cur=f.date;const rest=cleanTitle(ln.replace(f.match,' '));if(/[a-z]{3}/i.test(rest))out.push({title:rest,due:cur})}
+    else if(cur){const t=cleanTitle(ln);if(/[a-z]{3}/i.test(t))out.push({title:t,due:cur})}});
+  return out.slice(0,60)}
+/* schedule tables (Excel, Google Sheets, CSV, Word tables) */
+const ASSESS=/quiz|test\b|exam|midterm|progress check|project|essay|paper|presentation|hot seat|socratic|debate|\bdue\b/i;
+const ROLES=[['hw','Homework (due when the next one starts)'],['day','Due on that date'],['tests','Only tests, quizzes, projects'],['skip','Ignore']];
+const typeOf=t=>/^(study|review|prepare|practice|send|finish|read)\b/i.test(t)?'hw':/hot seat|socratic|debate|presentation/i.test(t)?'other':/progress check|midterm|unit test|final exam/i.test(t)?'test':guessType(t);
+const cellDate=v=>{const f=findDate(String(v||''));return f?f.date:null};
+const dateCount=rows=>rows.reduce((s,r)=>s+r.filter(c=>cellDate(c)).length,0);
+function parseDelim(t,d){const rows=[];let row=[],cell='',q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){cell+='"';i++}else q=false}else cell+=ch}
+    else if(ch==='"'&&cell==='')q=true;
+    else if(ch===d){row.push(cell);cell=''}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;row.push(cell);rows.push(row);row=[];cell=''}
+    else cell+=ch}
+  row.push(cell);rows.push(row);return rows.map(r=>r.map(c=>c.replace(/\s+/g,' ').trim()))}
+const looksTable=t=>{const ls=t.split(/\r?\n/).filter(l=>l.trim());return ls.filter(l=>l.includes('\t')).length>=Math.max(3,ls.length*0.4)};
+function gridFromTable(t){const g=[];[...t.rows].forEach((tr,ri)=>{g[ri]=g[ri]||[];let ci=0;
+  [...tr.cells].forEach(td=>{while(g[ri][ci]!==undefined)ci++;const v=td.textContent.replace(/\s+/g,' ').trim();const rs=td.rowSpan||1,cs=td.colSpan||1;
+    for(let a=0;a<rs;a++){g[ri+a]=g[ri+a]||[];for(let b=0;b<cs;b++)g[ri+a][ci+b]=(a===0&&b===0)?v:''}ci+=cs})});
+  return g.map(r=>Array.from(r,c=>c||''))}
+const XLSXJS='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+async function sheetRows(f){await loadScript(XLSXJS);const X=window.XLSX;const wb=X.read(new Uint8Array(await f.arrayBuffer()),{type:'array'});let best=[],bc=-1;
+  wb.SheetNames.forEach(n=>{const rows=X.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''}).map(r=>r.map(c=>String(c).replace(/\s+/g,' ').trim()));const k=dateCount(rows);if(k>bc){bc=k;best=rows}});return best}
+async function docxRows(f){await loadScript(MAMMOTH);const r=await window.mammoth.convertToHtml({arrayBuffer:await f.arrayBuffer()});
+  const doc=new DOMParser().parseFromString(r.value,'text/html');let best=null,bc=1;
+  doc.querySelectorAll('table').forEach(t=>{const rows=gridFromTable(t);const k=dateCount(rows);if(k>bc){bc=k;best=rows}});return best}
+function nextWeekday(s){let d=addDays(parse(s),1);while(d.getDay()===0||d.getDay()===6)d=addDays(d,1);return iso(d)}
+const splitSegs=v=>v.replace(/\)\s*:\s+/g,')\u0001').split(/;\s*|\u0001/).map(s=>s.replace(/\s+/g,' ').replace(/^[\s\-\u2013:,.]+|[\s\-\u2013:,]+$/g,'').trim()).filter(s=>/[a-z]{3}/i.test(s));
+function runTable(rows){rows=(rows||[]).filter(r=>r.some(c=>c));if(rows.length<2)return false;
+  const n=Math.max(...rows.map(r=>r.length));let dc=-1,bc=1;
+  for(let c=0;c<n;c++){const k=rows.filter(r=>cellDate(r[c])&&String(r[c]).length<24).length;if(k>bc){bc=k;dc=c}}
+  if(dc<0)return false;
+  const dated=rows.map(r=>({r,d:cellDate(r[dc])})).filter(x=>x.d);
+  const fi=rows.indexOf(dated[0].r);let header=null;for(let i=fi-1;i>=0;i--){if(rows[i].some(c=>c)){header=rows[i];break}}
+  const cols=[];
+  for(let c=0;c<n;c++){if(c===dc)continue;const vals=dated.map(x=>x.r[c]||'').filter(Boolean);if(!vals.length)continue;
+    const avg=vals.reduce((s,v)=>s+v.length,0)/vals.length;const h=header&&header[c]?header[c]:'';
+    const dayish=vals.every(v=>/^(mon|tue|wed|thu|fri|sat|sun)/i.test(v)&&v.length<12);
+    cols.push({c,label:h||('Column '+String.fromCharCode(65+(c%26))),sample:vals.find(v=>v.length>12)||vals[0],h,role:(dayish||avg<12)?'skip':null})}
+  const text=cols.filter(x=>x.role===null);
+  text.forEach(x=>{if(/home ?work|\bhw\b|assign|\bdue\b|to ?do/i.test(x.h))x.role='hw';else if(/class|agenda|activit|lesson|plan/i.test(x.h))x.role='tests'});
+  const un=text.filter(x=>x.role===null);
+  if(un.length&&!text.some(x=>x.role==='hw'||x.role==='day')){if(text.length===1)un[0].role='day';else un[un.length-1].role='hw'}
+  un.forEach(x=>{if(x.role===null)x.role='tests'});
+  cols.forEach(x=>{x.sample=x.sample.slice(0,70)});
+  tbl={dated,cols};bulkText=rows.map(r=>r.filter(Boolean).join(' | ')).join('\n');bulkMsg('');setBulk(tableItems());return true}
+function tableItems(){const out=[];const D=tbl.dated;const last=D[D.length-1].d;
+  tbl.cols.forEach(col=>{if(col.role==='skip')return;
+    D.forEach((x,i)=>{const v=x.r[col.c]||'';if(!v)return;let due=x.d;
+      if(col.role==='hw'){let j=i+1;while(j<D.length&&!(D[j].r[col.c]||''))j++;due=j<D.length?D[j].d:nextWeekday(last)}
+      splitSegs(v).forEach(s=>{if(col.role==='tests'&&!ASSESS.test(s))return;out.push({title:s.slice(0,140),due})})})});
+  return out.sort((a,b)=>a.due<b.due?-1:a.due>b.due?1:0).slice(0,80)}
+function colsHTML(){if(!tbl)return '';
+  return `<div style="margin:.75rem 0 1rem"><p class="t" style="margin-bottom:.2rem">This looks like a schedule table. Here’s how each column is being used:</p><p class="hint" style="margin:0 0 .4rem">Change any of these and the list below updates.</p>
+    ${tbl.cols.map(x=>`<div class="colrow"><span class="sub"><b style="font-weight:600;color:var(--ink)">${esc(x.label)}</b>, like “${esc(x.sample)}”</span><select data-col="${x.c}" aria-label="How to use ${esc(x.label)}">${ROLES.map(r=>`<option value="${r[0]}" ${r[0]===x.role?'selected':''}>${r[1]}</option>`).join('')}</select></div>`).join('')}</div>`}
+function bulkMsg(t,c){const m=$('#bulkMsg');m.textContent=t;m.className='import-msg '+(c||'')}
+function setBulk(items){const ts=iso(today());
+  bulk=items.map(x=>({title:x.title,due:x.due,type:x.type||typeOf(x.title),on:x.due>=ts&&!/^maybe\b/i.test(x.title)&&!/no school|no class|holiday|break|vacation/i.test(x.title)}));renderBulk()}
+function runBulk(text){tbl=null;bulkText=text;const items=parseSchedule(text);
+  if(!items.length){bulk=[];renderBulk();bulkMsg('Couldn’t find any dates in that sheet. Dates like 11/14 or Nov 14 work best.'+(sampleFn?' You can also let Claude read it.':''),'err');return}
+  bulkMsg('');setBulk(items)}
+function renderBulk(){const el=$('#bulkReview');
+  const ai=sampleFn&&bulkText?'<button class="icon" id="bulkAI" type="button" style="color:var(--accent)">'+(bulk.length?'Not right? Let Claude read it':'Let Claude read it')+'</button>':'';
+  const ch=colsHTML();
+  if(!bulk.length){el.innerHTML=ch+(tbl?'<p class="hint">Nothing found with these settings. Try changing how a column is used.</p>':'')+(ai?'<div class="row">'+ai+'</div>':'');return}
+  const n=bulk.filter(b=>b.on).length;
+  el.innerHTML=ch+`<p class="t" style="margin:.75rem 0 .2rem">Found ${bulk.length} item${bulk.length===1?'':'s'}. Check the dates, uncheck anything that isn’t an assignment, then add them.</p>
+    <p class="hint" style="margin:0 0 .5rem">Some sheets list the day work is assigned instead of the day it’s due, so double-check a couple. Past dates start unchecked.</p>
+    ${bulk.map((b,i)=>`<div class="rv ${b.on?'':'off'}"><input type="checkbox" class="check" data-bk="on" data-i="${i}" ${b.on?'checked':''} aria-label="Include ${esc(b.title)}">
+      <input type="text" class="rv-t" data-bk="title" data-i="${i}" value="${esc(b.title)}" aria-label="Assignment name">
+      <input type="date" data-bk="due" data-i="${i}" value="${b.due}" aria-label="Due date">
+      <select data-bk="type" data-i="${i}" aria-label="Kind">${TYPELIST.map(t=>`<option value="${t[0]}" ${t[0]===b.type?'selected':''}>${t[1]}</option>`).join('')}</select></div>`).join('')}
+    <div class="row" style="margin-top:.9rem"><button class="btn" id="bulkAdd" type="button" ${n?'':'disabled'}>Add ${n} assignment${n===1?'':'s'}</button><button class="icon" id="bulkCancel" type="button">Cancel</button>${ai}</div>`}
+$('#bulkReview').addEventListener('input',e=>{const t=e.target;const k=t.dataset&&t.dataset.bk;if(!k||k==='on')return;const b=bulk[+t.dataset.i];if(b)b[k]=t.value.trim?t.value:t.value});
+$('#bulkReview').addEventListener('change',e=>{const t=e.target;
+  if(t.dataset&&t.dataset.col!==undefined&&tbl){const col=tbl.cols.find(x=>x.c===+t.dataset.col);if(col){col.role=t.value;setBulk(tableItems())}return}
+  const k=t.dataset&&t.dataset.bk;if(!k)return;const b=bulk[+t.dataset.i];if(!b)return;
+  if(k==='on'){b.on=t.checked;renderBulk()}else b[k]=t.value});
+$('#bulkReview').addEventListener('click',async e=>{const id=e.target.id;
+  if(id==='bulkCancel'){bulk=[];bulkText='';tbl=null;renderBulk();bulkMsg('')}
+  if(id==='bulkAdd'){const cls=$('#bulkClass').value.trim();let added=0,dup=0;
+    bulk.filter(b=>b.on&&b.title.trim()&&b.due).forEach(b=>{const title=b.title.trim();
+      if(S.assignments.some(a=>a.due===b.due&&a.title.toLowerCase()===title.toLowerCase())){dup++;return}
+      S.assignments.push({id:uid(),src:'sheet',title,cls,due:b.due,type:b.type,size:(b.type==='project'||b.type==='paper')?'l':'m',done:false,steps:[]});added++});
+    save();bulk=[];bulkText='';tbl=null;renderAll();renderBulk();
+    bulkMsg('Added '+added+' assignment'+(added===1?'':'s')+(dup?' (skipped '+dup+' already on your list)':'')+'.'+(S.assignments.some(a=>a.src==='sheet'&&(a.type==='test'||a.type==='quiz'))?' Tests and quizzes have a “Make a study plan” button.':''),'ok')}
+  if(id==='bulkAI'&&sampleFn&&bulkText){const btn=e.target;btn.disabled=true;bulkMsg('Claude is reading the sheet…');const cls=$('#bulkClass').value.trim();
+    const prompt='Below is the text of a high school assignment sheet or class schedule'+(cls?' for '+cls:'')+'. Today is '+iso(today())+'. List every assignment, reading, quiz, test, or project the student must do, with the date it is due. Pick the year that makes sense for a school schedule near today. Skip holidays, no-school days, and class activities that need no work from the student. Keep each title under 12 words. type is one of hw, test, quiz, project, paper, other. Respond with only JSON: {"items":[{"title":"...","due":"YYYY-MM-DD","type":"hw"}]}\n\nSHEET:\n'+bulkText.slice(0,12000);
+    try{const r=await sampleFn.json(prompt);const items=(r&&Array.isArray(r.items)?r.items:[]).filter(x=>x&&x.title&&/^\d{4}-\d{2}-\d{2}$/.test(String(x.due))).map(x=>({title:String(x.title).trim().slice(0,140),due:String(x.due),type:TYPELIST.some(t=>t[0]===x.type)?x.type:guessType(String(x.title))})).slice(0,60);
+      if(!items.length)throw {code:'empty'};bulkMsg('');setBulk(items)}
+    catch(err){bulkMsg(err&&err.code==='not_granted'?'Claude access wasn’t allowed. You can still fix the list by hand.':'Claude couldn’t find assignments in that sheet. You can still add them by hand.','err');btn.disabled=false}}});
+$('#bulkFile').addEventListener('change',async e=>{const inp=e.target;const f=inp.files&&inp.files[0];if(!f)return;bulkMsg('Reading your sheet…');
+  try{const n=(f.name||'').toLowerCase();
+    if(/\.(xlsx|xls)$/.test(n)){const rows=await sheetRows(f);if(!runTable(rows))runBulk(rows.map(r=>r.join(' ')).join('\n'))}
+    else if(/\.(csv|tsv)$/.test(n)){const t=await f.text();if(!runTable(parseDelim(t,n.endsWith('.tsv')?'\t':',')))runBulk(t)}
+    else if(n.endsWith('.docx')){const rows=await docxRows(f);if(!(rows&&runTable(rows)))runBulk(await fileText(f))}
+    else runBulk(await fileText(f))}
+  catch(err){bulkMsg(fileErr(err),'err')}inp.value='';});
+$('#bulkFind').addEventListener('click',()=>{const t=$('#bulkPaste').value.trim();if(!t){bulkMsg('Paste the sheet’s text first.','err');return}if(!(looksTable(t)&&runTable(parseDelim(t,'\t'))))runBulk(t)});
 
 /* photo reading (only inside Claude) */
 function photoError(e){const c=e&&e.code;
