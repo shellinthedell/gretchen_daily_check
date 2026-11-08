@@ -87,6 +87,21 @@ section[data-view].on{display:block}
 .today-grid{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));align-items:start;margin-bottom:1.25rem}
 .today-grid > :empty{display:none}
 .today-grid .panel{margin-bottom:0}
+.tstats{display:flex;gap:2rem;margin-bottom:.6rem}.tstats div{display:flex;flex-direction:column}.tstats .big{font-size:1.6rem;font-weight:600;line-height:1.1}
+.spark{display:grid;grid-template-columns:repeat(7,1fr);gap:.4rem;height:5.5rem;align-items:end}
+.spark div{display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;gap:.2rem}
+.spark i{display:block;width:100%;max-width:1.6rem;background:var(--accent);border-radius:4px 4px 2px 2px}
+.spark span{font-size:.75rem;color:var(--muted)}
+.cbar{display:grid;grid-template-columns:minmax(0,9rem) 1fr auto;gap:.6rem;align-items:center;font-size:.88rem;margin-bottom:.3rem}
+.cbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cbar b{display:block;height:.55rem;border-radius:4px;background:var(--accent);opacity:.75}.cbar em{font-style:normal;color:var(--muted)}
+.cls{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr));gap:.6rem;margin-top:.6rem}
+.clsitem{display:flex;gap:.7rem;align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:.7rem .85rem}
+.clsitem.d{opacity:.6}
+.clsitem .check{width:1.35rem;height:1.35rem;margin-top:.1rem}
+.clsitem .check:checked::after{width:.36rem;height:.65rem;border-width:0 2px 2px 0}
+.clsitem .nm{font-weight:500;line-height:1.3}
+.clsitem a{color:var(--accent);font-size:.9rem;text-decoration:none;display:inline-block;margin-top:.2rem;margin-right:.75rem}
+.clsitem a:hover{text-decoration:underline}
 @media (min-width:900px){#strats{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;align-items:start}#strats details{margin:0}}
 h2{font-size:1.6rem;margin-bottom:.4rem;letter-spacing:-.015em}
 h3{font-size:1.1rem;margin-bottom:.5rem}
@@ -259,6 +274,8 @@ details .try b{font-weight:600}
     </div>
   </div>
 
+  <div id="classPages"></div>
+
   <div class="today-grid"><div id="dueSoon"></div>
   <div id="todaySessions"></div></div>
 
@@ -278,6 +295,7 @@ details .try b{font-weight:600}
   <h2 id="h-due">Due by tomorrow</h2>
   <p class="intro">Everything that’s overdue, due today, or due tomorrow, all in one place. Check things off as you finish them.</p>
   <div class="legend" aria-label="Color key"><span><i style="background:var(--rose)"></i>Overdue</span><span><i style="background:var(--sun)"></i>Due today or tomorrow</span><span><i style="background:var(--later)"></i>Later</span></div>
+  <div id="dueNudge"></div>
   <div id="dueList"></div>
 </section>
 
@@ -317,6 +335,7 @@ details .try b{font-weight:600}
 <section data-view="assignments" aria-labelledby="h-asg">
   <h2 id="h-asg">Assignments</h2>
   <p class="intro">Your brain is for thinking, not for remembering due dates. Put everything here. Big ones? Break them into steps so the first one feels easy.</p>
+  <div id="timeCard"></div>
   <div class="panel">
     <form id="addForm" class="grid two" autocomplete="off">
       <div><label for="aTitle">Assignment</label><input id="aTitle" type="text" placeholder="History essay draft" required></div>
@@ -507,7 +526,8 @@ function itemHTML(a,c){c=typeof c==='string'?c:'';const d=dueLabel(a.due);
   return `<div class="item ${a.done?'done':'u-'+d.c}">
     <input type="checkbox" class="check" data-act="done" data-id="${a.id}" ${a.done?'checked':''} aria-label="Mark done: ${esc(a.title)}">
     <div><div class="t">${esc(a.title)}</div>
-      <div class="sub">${a.done?'':`<span class="tag ${d.c}">${d.t}</span>`}${TYPES[a.type]?`<span class="tag big">${TYPES[a.type]}</span>`:''}${a.size==='l'&&a.type!=='project'&&a.type!=='paper'?'<span class="tag big">Big</span>':''}${esc(a.cls||'')}</div>
+      <div class="sub">${a.done?'':`<span class="tag ${d.c}">${d.t}</span>`}${TYPES[a.type]?`<span class="tag big">${TYPES[a.type]}</span>`:''}${a.size==='l'&&a.type!=='project'&&a.type!=='paper'?'<span class="tag big">Big</span>':''}${timeOn(a.id)?`<span class="tag big">⏱ ${fmtMin(timeOn(a.id))}</span>`:''}${esc(a.cls||'')}</div>
+      ${a.done?'':`<button class="icon" data-act="start" data-min="25" data-aid="${a.id}" style="color:var(--accent);padding-left:0">Start timer</button>`}
       ${steps?`<ul class="steps">${steps}</ul>`:''}
       ${!a.done&&(a.type==='test'||a.type==='quiz')?(S.plans.some(p=>p.aid===a.id)?'<a href="#tests" class="icon" style="color:var(--mint);padding-left:0;text-decoration:none;display:inline-block">Study plan ready</a>':`<button class="icon" data-act="plan" data-id="${a.id}" style="color:var(--accent);padding-left:0">Make a study plan</button>`):''}
       ${reqHTML(a,c)}
@@ -539,38 +559,68 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
     if(a&&act==='delreq'&&a.reqs){a.reqs.splice(+t.dataset.i,1);save();renderAll()}}
   if(t.dataset.act==='plan'){const a=S.assignments.find(x=>x.id===t.dataset.id);if(a){planFor=a.id;$('#pName').value=a.title+(a.cls?' ('+a.cls+')':'');$('#pDate').value=a.due;location.hash='tests';setTimeout(()=>$('#pTopics').focus(),60)}}
   if(t.dataset.act==='delplan'){S.plans=S.plans.filter(x=>x.id!==t.dataset.id);save();renderAll()}
-  if(t.dataset.act==='start'){startTimer(+t.dataset.min,t.dataset.label)}
+  if(t.dataset.act==='start'){startTimer(+t.dataset.min,t.dataset.label,t.dataset.aid)}
+  if(t.dataset.act==='track'){startTimer(0,t.dataset.label,t.dataset.aid)}
 });
 document.addEventListener('submit',e=>{const f=e.target;if(!f.classList.contains('addstep'))return;e.preventDefault();
   const v=f.querySelector('input').value.trim();if(!v)return;const a=S.assignments.find(x=>x.id===f.dataset.id);
   if(a){a.steps.push({t:v,done:false});save();renderAll();const nf=(document.querySelector('section[data-view].on')||document).querySelector(`.addstep[data-id="${a.id}"] input`);if(nf)nf.focus()}});
 
 /* focus card */
+function clsNudge(){const ids=checkedToday();const left=COURSES.filter(c=>!ids.includes(c.id));if(!left.length)return '';
+  return `<div class="step" style="border-left:4px solid var(--sun)"><b>Before you start: check your class pages.</b> Teachers change things that never show up on the Canvas calendar. ${left.length===COURSES.length?'All '+left.length:left.length} left: ${left.map(c=>esc(c.name)).join(', ')}. <a href="#" data-goclasses style="color:inherit;font-weight:500">Go to class pages</a></div>`}
+document.addEventListener('click',e=>{if(e.target.closest('[data-goclasses]')){e.preventDefault();const el=$('#classPages');el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'})}});
 function renderFocus(){const a=nextUp();const b=$('#focusBody');
   const startBtns=`<div class="starts"><span class="lbl">You don’t have to finish. Just start for:</span>
     <button class="btn light" data-act="start" data-min="5">5 minutes</button>
     <button class="btn light" data-act="start" data-min="10">10 minutes</button>
     <button class="btn light" data-act="start" data-min="25">25 minutes</button>
+    <button class="btn ghost" data-act="track">No limit</button>
     <a href="#start" class="stuck">Stuck? Get help starting</a></div>`;
-  if(!a){b.innerHTML=`<p class="q">Your next step</p><p class="task">You’re all caught up.</p><p class="meta">Add anything new below as soon as you hear about it. Or use the time to get ahead on a test plan.</p>`+startBtns;return}
+  if(!a){b.innerHTML=`<p class="q">Your next step</p><p class="task">You’re all caught up.</p><p class="meta">Add anything new below as soon as you hear about it. Or use the time to get ahead on a test plan.</p>`+clsNudge()+startBtns;return}
   const d=dueLabel(a.due);const st=a.steps.find(s=>!s.done);
   b.innerHTML=`<p class="q">Your next step</p><span class="pill u-${d.c}">${d.t}</span><p class="task">${esc(a.title)}</p>
-    <p class="meta">${esc(a.cls||'')}</p>
+    <p class="meta">${esc(a.cls||'')}</p>${clsNudge()}
     ${st?`<div class="step">First, just this: <b>${esc(st.t)}</b></div>`:(a.size==='l'?`<div class="step">This one’s big. Try breaking it into steps on the Assignments tab first.</div>`:'')}`+startBtns;}
 
 /* timer */
-let tEnd=0,tTotal=0,tInt=null,tLabel='';const C=2*Math.PI*44;$('#prog').style.strokeDasharray=C;
-function startTimer(min,label){if(label!==undefined)tLabel=label||'';tTotal=min*60;tEnd=Date.now()+tTotal*1000;$('#focusBody').style.display='none';$('#timer').classList.add('on');window.scrollTo(0,0);
-  $('#timerMsg').textContent=tLabel?'Just this: '+tLabel+'. Everything else can wait.':'Just this. Everything else can wait. Phone face down?';
-  $('#timerBtns').innerHTML='<button class="btn ghost" id="stopT">Stop</button>';$('#stopT').onclick=stopTimer;
-  clearInterval(tInt);tick();tInt=setInterval(tick,250);}
-function tick(){const left=Math.max(0,Math.round((tEnd-Date.now())/1000));
-  $('#time').textContent=Math.floor(left/60)+':'+pad(left%60);
-  $('#prog').style.strokeDashoffset=C*(1-left/tTotal);
-  if(left<=0){clearInterval(tInt);$('#timerMsg').textContent='You started. That’s the hardest part. Keep going, or take a 5-minute break and move around.';
+/* timer + time tracking */
+const C=2*Math.PI*44;$('#prog').style.strokeDasharray=C;let tInt=null;
+const fmtMin=m=>m<60?m+' min':Math.floor(m/60)+' hr'+(m%60?' '+(m%60)+' min':'');
+function logTime(sec,aid,label){const m=Math.round(sec/60);if(m<1)return;const a=S.assignments.find(x=>x.id===aid);
+  S.log=S.log||[];S.log.push({d:iso(today()),m,aid:aid||null,label:a?a.title:(label||'Other work'),cls:a?(a.cls||''):''});if(S.log.length>2000)S.log=S.log.slice(-2000)}
+function startTimer(min,label,aid){const r=S.run;if(r)finishRun(true);
+  if(aid===undefined&&label===undefined){const n=nextUp();aid=n?n.id:null}
+  const a=S.assignments.find(x=>x.id===aid);
+  S.run={start:Date.now(),min:min||0,aid:aid||null,label:label||(a?a.title:'')};save();showRun()}
+function showRun(){const r=S.run;if(!r)return;$('#focusBody').style.display='none';$('#timer').classList.add('on');window.scrollTo(0,0);
+  $('#timerMsg').textContent=r.label?'Just this: '+r.label+'. Everything else can wait.':'Just this. Everything else can wait. Phone face down?';
+  $('#timerBtns').innerHTML='<button class="btn ghost" id="stopT">'+(r.min?'Stop':'Stop and save time')+'</button>';$('#stopT').onclick=()=>finishRun(false);
+  clearInterval(tInt);tick();tInt=setInterval(tick,250)}
+function tick(){const r=S.run;if(!r)return;const el=Math.floor((Date.now()-r.start)/1000);
+  if(!r.min){$('#time').textContent=Math.floor(el/60)+':'+pad(el%60);$('#prog').style.strokeDashoffset=C*(1-(el%1500)/1500);return}
+  const tot=r.min*60,left=Math.max(0,tot-el);
+  $('#time').textContent=Math.floor(left/60)+':'+pad(left%60);$('#prog').style.strokeDashoffset=C*(1-left/tot);
+  if(left<=0){clearInterval(tInt);const aid=r.aid,label=r.label;logTime(tot,aid,label);S.run=null;save();renderAll();
+    const tm=timeOn(aid);
+    $('#timerMsg').textContent='You worked '+r.min+' minutes'+(tm&&aid?' (that’s '+fmtMin(tm)+' on this so far)':'')+'. That’s the hardest part. Keep going, or take a 5-minute break and move around.';
     $('#timerBtns').innerHTML='<button class="btn light" id="moreT">Keep going 10 more</button><button class="btn ghost" id="doneT">Take a break</button>';
-    $('#moreT').onclick=()=>startTimer(10);$('#doneT').addEventListener('click',()=>{tLabel=''});$('#doneT').onclick=stopTimer;}}
-function stopTimer(){clearInterval(tInt);tLabel='';$('#timer').classList.remove('on');$('#focusBody').style.display='';}
+    $('#moreT').onclick=()=>startTimer(10,label,aid);$('#doneT').onclick=closeTimer}}
+function finishRun(silent){const r=S.run;clearInterval(tInt);if(r){const el=(Date.now()-r.start)/1000;logTime(r.min?Math.min(el,r.min*60):Math.min(el,6*3600),r.aid,r.label);S.run=null;save()}
+  if(!silent){closeTimer();renderAll()}}
+function closeTimer(){clearInterval(tInt);$('#timer').classList.remove('on');$('#focusBody').style.display=''}
+function stopTimer(){finishRun(false)}
+const timeOn=aid=>(S.log||[]).filter(x=>x.aid&&x.aid===aid).reduce((n,x)=>n+x.m,0);
+function renderTime(){const L=S.log||[];const t=iso(today());const wk=iso(addDays(today(),-((today().getDay()+6)%7)));
+  const td=L.filter(x=>x.d===t).reduce((n,x)=>n+x.m,0),w=L.filter(x=>x.d>=wk);const wm=w.reduce((n,x)=>n+x.m,0);
+  const by={};w.forEach(x=>{const k=x.cls||'Other';by[k]=(by[k]||0)+x.m});const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]);const mx=rows.length?rows[0][1]:1;
+  const days=[];for(let i=6;i>=0;i--){const d=iso(addDays(today(),-i));days.push([d,L.filter(x=>x.d===d).reduce((n,x)=>n+x.m,0)])}const dmx=Math.max(30,...days.map(x=>x[1]));
+  $('#timeCard').innerHTML=`<div class="panel"><h3>Time on homework</h3>
+    ${L.length?`<div class="tstats"><div><span class="big">${fmtMin(td)}</span><span class="sub">today</span></div><div><span class="big">${fmtMin(wm)}</span><span class="sub">this week</span></div></div>
+    <div class="spark" aria-label="Minutes each of the last 7 days">${days.map(x=>`<div title="${dayName(x[0])}: ${x[1]} min"><i style="height:${Math.max(x[1]?8:2,Math.round(x[1]/dmx*100))}%"></i><span>${parse(x[0]).toLocaleDateString(undefined,{weekday:'narrow'})}</span></div>`).join('')}</div>
+    ${rows.length?`<div class="sub" style="margin:.6rem 0 .3rem">This week by class</div>${rows.map(r=>`<div class="cbar"><span>${esc(r[0])}</span><b style="width:${Math.max(4,Math.round(r[1]/mx*100))}%"></b><em>${fmtMin(r[1])}</em></div>`).join('')}`:''}`
+    :'<p class="sub">Start a timer and your homework time adds up here, by day and by class.</p>'}
+    <div class="row" style="margin-top:.8rem"><button class="btn small" data-act="track" type="button">Track time with no limit</button></div></div>`}
 
 /* test plans */
 $('#planForm').addEventListener('submit',e=>{e.preventDefault();
@@ -639,6 +689,22 @@ function renderPlans(){const el=$('#plans');
       <ul class="days">${p.days.map((d,i)=>`<li class="${d.done?'d':''} ${d.date===ts?'today':''}"><div class="when">${d.date===ts?'Today':dayName(d.date)}</div><div class="what">${dayBody(d)}</div>
         <label class="c"><input type="checkbox" class="check" data-act="session" data-id="${p.id}" data-i="${i}" ${d.done?'checked':''}> Done</label></li>`).join('')}</ul></div>`}).join('');}
 const dayBody=d=>d.tasks&&d.tasks.length?'<ul class="tasks">'+d.tasks.map(t=>'<li>'+t+'</li>').join('')+'</ul>':esc(d.what);
+/* class pages to check each day */
+const COURSES=[
+ {id:'chem',name:'Honors Chemistry',links:[['Open course','https://kinkaid.instructure.com/courses/8132']]},
+ {id:'alg',name:'Algebra II',links:[['Unit 4 notes and videos','https://kinkaid.instructure.com/courses/8263/pages/unit-4-notes-keys-videos2627']]},
+ {id:'eng',name:'English',links:[['Assignments','https://kinkaid.instructure.com/courses/8154/assignments']]},
+ {id:'span',name:'Spanish III',links:[['Open course','https://kinkaid.instructure.com/courses/8203']]},
+ {id:'apwh',name:'AP World History II',links:[['Week at a glance','https://kinkaid.instructure.com/courses/8231'],['Assignment sheet','https://docs.google.com/spreadsheets/d/11tNr60FAeR-ZvBdj6X0MPfvX46bS-NnULXbXHnrljLg/edit?gid=0#gid=0']]}
+];
+function checkedToday(){const t=iso(today());if(!S.cls||S.cls.date!==t)S.cls={date:t,ids:[]};return S.cls.ids}
+function renderClasses(){const ids=checkedToday();const n=COURSES.filter(c=>ids.includes(c.id)).length;const all=n===COURSES.length;
+  $('#classPages').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Check your class pages</h3><span class="sub">${all?'All checked today. Nice.':n+' of '+COURSES.length+' checked today'}</span></div>
+    <p class="sub" style="margin:.3rem 0 0">Teachers post things that don’t always show up on the Canvas calendar. Take a quick look at each one, and add anything new below.</p>
+    <div class="cls">${COURSES.map(c=>{const d=ids.includes(c.id);return `<div class="clsitem ${d?'d':''}"><input type="checkbox" class="check" data-cls="${c.id}" ${d?'checked':''} aria-label="Checked ${esc(c.name)} today"><div><div class="nm">${esc(c.name)}</div>${c.links.map(l=>`<a href="${esc(l[1])}" target="_blank" rel="noopener" data-clslink="${c.id}">${esc(l[0])} ↗</a>`).join('')}</div></div>`}).join('')}</div></div>`}
+function markCls(id,on){const ids=checkedToday();const i=ids.indexOf(id);if(on&&i<0)ids.push(id);if(!on&&i>=0)ids.splice(i,1);save();renderClasses();renderFocus();renderDue()}
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.cls)markCls(t.dataset.cls,t.checked)});
+document.addEventListener('click',e=>{const a=e.target.closest('[data-clslink]');if(a)setTimeout(()=>markCls(a.dataset.clslink,true),50)});
 const LEGEND='<div class="legend" aria-label="Color key"><span><i style="background:var(--rose)"></i>Overdue</span><span><i style="background:var(--sun)"></i>Due today or tomorrow</span><span><i style="background:var(--later)"></i>Later</span></div>';
 function renderTodaySessions(){const ts=iso(today());const tm=iso(addDays(today(),1));const f=nextUp();
   /* coming up: a short list */
@@ -655,7 +721,7 @@ function renderTodaySessions(){const ts=iso(today());const tm=iso(addDays(today(
   const p=S.plans.find(x=>x.aid===a.id);let body='';
   if(p){const i=p.days.findIndex(d=>d.date===ts);const d=p.days[i];
     if(d&&!d.done)body=`<p class="t" style="margin-bottom:.25rem">Spend ${p.min} minutes studying today.</p><div class="sub" style="margin-bottom:.6rem">${dayBody(d)}</div>
-      <div class="row"><button class="btn small" data-act="start" data-min="${p.min}" data-label="${esc(a.title)}">Start ${p.min} minutes</button>
+      <div class="row"><button class="btn small" data-act="start" data-min="${p.min}" data-label="${esc(a.title)}" data-aid="${a.id}">Start ${p.min} minutes</button>
       <label class="c" style="display:inline-flex;gap:.45rem;align-items:center;color:var(--ink);margin:0;cursor:pointer"><input type="checkbox" class="check" data-act="session" data-id="${p.id}" data-i="${i}" style="width:1.25rem;height:1.25rem"> Done</label></div>`;
     else if(d&&d.done)body=`<p class="t">You did today’s study session. Nice work.</p>`;
     else{const nx=p.days.find(x=>x.date>ts&&!x.done);body=`<p class="t">${nx?'Your study plan starts '+dayName(nx.date)+'.':'Your study plan is all set.'}</p>`}
@@ -663,9 +729,11 @@ function renderTodaySessions(){const ts=iso(today());const tm=iso(addDays(today(
   else{let m=a.type==='quiz'?15:25;if(n>0&&n<=2)m+=15;if(n===0)m=10;
     const tip=n===0?'Do a quick review of your trickiest topic before it starts.':n<=2?'It’s close, so give it a little more time today.':'A little each day beats cramming. A study plan spreads it out for you.';
     body=`<p class="t" style="margin-bottom:.25rem">Spend ${m} minutes studying today.</p><p class="sub">${tip}</p>
-      <div class="row"><button class="btn small" data-act="start" data-min="${m}" data-label="${esc(a.title)}">Start ${m} minutes</button>${n>0?`<button class="icon" data-act="plan" data-id="${a.id}" style="color:var(--accent)">Make a study plan</button>`:''}</div>`}
+      <div class="row"><button class="btn small" data-act="start" data-min="${m}" data-label="${esc(a.title)}" data-aid="${a.id}">Start ${m} minutes</button>${n>0?`<button class="icon" data-act="plan" data-id="${a.id}" style="color:var(--accent)">Make a study plan</button>`:''}</div>`}
   $('#todaySessions').innerHTML=`<div class="panel u-${n<=1?'soon':'ok'}"><h3>Next test or quiz</h3><p style="margin-bottom:.6rem"><b style="font-weight:600">${esc(a.title)}</b> is ${when}${a.cls?' ('+esc(a.cls)+')':''}.</p>${body}${more}</div>`;}
-function renderDue(){const tm=iso(addDays(today(),1));const ts=iso(today());
+function renderDue(){const ids=checkedToday();const left=COURSES.filter(c=>!ids.includes(c.id)).length;
+  $('#dueNudge').innerHTML=left?`<div class="panel u-soon" style="padding:.85rem 1.1rem"><b style="font-weight:600">This list only shows what\u2019s on Canvas and what you\u2019ve added.</b> You haven\u2019t checked ${left} class page${left===1?'':'s'} today, so something might be missing. <a href="#today" style="color:var(--accent)">Check them on Today</a></div>`:'';
+const tm=iso(addDays(today(),1));const ts=iso(today());
   const items=sorted().filter(a=>!a.done&&a.due<=tm);const el=$('#dueList');
   if(!items.length){el.innerHTML='<div class="empty">Nothing due today or tomorrow. Nice. Want to get ahead? Check your <a href="#tests" style="color:var(--accent)">test plans</a> or the <a href="#assignments" style="color:var(--accent)">full assignment list</a>.</div>';return}
   const g=[['Catch up on these',items.filter(a=>a.due<ts)],['Due today',items.filter(a=>a.due===ts)],['Due tomorrow',items.filter(a=>a.due===tm)]];
@@ -735,7 +803,7 @@ function showStep(){const w=WHY.find(x=>x.k===st.why);if(!w)return;const a=S.ass
   $('#st3').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}
 $('#stSave').onclick=()=>{const a=S.assignments.find(x=>x.id===st.aid);const v=$('#stStep').value.trim();if(!a||!v)return;
   a.steps.unshift({t:v,done:false});save();renderAll();$('#stSave').hidden=true;$('#stMsg').textContent='Saved as the first step on '+a.title+'.';};
-$('#stGo').onclick=()=>{const v=$('#stStep').value.trim()||stTask();location.hash='today';setTimeout(()=>startTimer(5,v),0);};
+$('#stGo').onclick=()=>{const v=$('#stStep').value.trim()||stTask();location.hash='today';setTimeout(()=>startTimer(5,v,st.aid||null),0);};
 function updateAI(){$('#stAI').hidden=!sampleFn}
 if(window.claude&&typeof window.claude.use==='function'){window.claude.use('sample').then(async s=>{sampleFn=s||null;updateAI();
   if(sampleFn){try{const l=await sampleFn.limits();canImg=!!(l&&l.images)}catch(e){canImg=false}$('#pImgWrap').hidden=!canImg;renderAll()}}).catch(()=>{})}
@@ -990,8 +1058,9 @@ $('#feedSave').onclick=()=>{const u=feedFix($('#feedUrl').value);if(!/^https:\/\
 $('#feedClear').onclick=()=>{delete S.canvasUrl;save();$('#feedUrl').value='';$('#feedMsg').textContent='';renderImport()};
 function renderImport(){$('#feedClear').hidden=!S.canvasUrl;if(S.canvasUrl&&!$('#feedUrl').value)$('#feedUrl').value=S.canvasUrl;$('#lastImport').textContent=S.lastImport?'Last imported '+(S.lastImport===iso(today())?'today':dayName(S.lastImport)):''}
 
-function renderAll(){renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
+function renderAll(){renderClasses();renderTime();renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
 clearPast();renderAll();route();pullFeed(false);
+if(S.run){if(Date.now()-S.run.start>12*3600e3){S.run=null;save()}else showRun()}
 /* keep dates current if the page stays open overnight */
 let shownDay=iso(today());
 function refreshDay(){const d=iso(today());if(d!==shownDay){shownDay=d;clearPast();renderAll()}}
