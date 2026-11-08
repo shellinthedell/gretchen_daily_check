@@ -14,7 +14,7 @@
 :root{
   --bg:#F2F5FB; --surface:#FFFFFF; --ink:#1F2A44; --muted:#5A6684; --line:#D9E0EE;
   --accent:#4F5FE8; --accent-ink:#FFFFFF; --accent-soft:#E4E7FD;
-  --c-today:#4F5FE8; --c-due:#9A6700; --c-start:#C2410C; --c-assignments:#4B5A7A; --c-tests:#7C4DDB; --c-strategies:#B0378A; --c-calm:#0E7C86;
+  --c-today:#4F5FE8; --c-due:#9A6700; --c-start:#C2410C; --c-assignments:#4B5A7A; --c-tests:#7C4DDB; --c-strategies:#B0378A; --c-calm:#0E7C86; --c-free:#0369A1;
   --sun:#9A6700; --sun-soft:#FFF1CF; --later:#1E7A4F; --later-soft:#DDF2E5; --mint:#1E8A66; --mint-soft:#D9F3E9; --rose:#B4314F; --rose-soft:#FBE2E8;
   color-scheme: light;
   box-sizing:border-box;
@@ -23,7 +23,7 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --c-today:#8C97FF; --c-due:#F4C35A; --c-start:#FF9A6B; --c-assignments:#A8B4CF; --c-tests:#B79CFF; --c-strategies:#F28AD0; --c-calm:#5CCAD3;
+    --c-today:#8C97FF; --c-due:#F4C35A; --c-start:#FF9A6B; --c-assignments:#A8B4CF; --c-tests:#B79CFF; --c-strategies:#F28AD0; --c-calm:#5CCAD3; --c-free:#5EB8F0;
     --later:#6FD69B; --later-soft:#183A2A;
     --bg:#12182A; --surface:#1B2338; --ink:#E7EBF7; --muted:#A1ABC6; --line:#2E3854;
     --accent:#8C97FF; --accent-ink:#12182A; --accent-soft:#2A3160;
@@ -32,7 +32,7 @@
   }
 }
 :root[data-theme="dark"]{
-  --c-today:#8C97FF; --c-due:#F4C35A; --c-start:#FF9A6B; --c-assignments:#A8B4CF; --c-tests:#B79CFF; --c-strategies:#F28AD0; --c-calm:#5CCAD3;
+  --c-today:#8C97FF; --c-due:#F4C35A; --c-start:#FF9A6B; --c-assignments:#A8B4CF; --c-tests:#B79CFF; --c-strategies:#F28AD0; --c-calm:#5CCAD3; --c-free:#5EB8F0;
   --later:#6FD69B; --later-soft:#183A2A;
   --bg:#12182A; --surface:#1B2338; --ink:#E7EBF7; --muted:#A1ABC6; --line:#2E3854;
   --accent:#8C97FF; --accent-ink:#12182A; --accent-soft:#2A3160;
@@ -71,6 +71,7 @@ nav a[aria-current="page"]::before{background:var(--bg)}
 [href="#tests"],section[data-view="tests"]{--sec:var(--c-tests)}
 [href="#strategies"],section[data-view="strategies"]{--sec:var(--c-strategies)}
 [href="#calm"],section[data-view="calm"]{--sec:var(--c-calm)}
+[href="#free"],section[data-view="free"]{--sec:var(--c-free)}
 section[data-view] > h2::before{content:"";display:block;width:2.75rem;height:6px;border-radius:3px;background:var(--sec);margin-bottom:.7rem}
 
 main{padding:1.75rem 0 4rem}
@@ -100,6 +101,21 @@ section[data-view].on{display:block}
 .focus .clschip,.runbar .clschip{background:transparent;color:inherit;border-color:color-mix(in srgb,var(--bg) 35%,transparent)}
 .focus .clschip[aria-pressed="true"],.runbar .clschip[aria-pressed="true"]{background:var(--bg);color:var(--ink);border-color:var(--bg)}
 .startpick{margin-bottom:1rem}
+.when2{font-size:.8rem;opacity:.7;margin-top:.05rem}
+.early{display:inline-block;background:var(--sun);color:#1F2A44;font-weight:600;font-size:.9rem;border-radius:10px;padding:.35rem .75rem;margin-bottom:.8rem}
+.freenote{display:block;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c-free);border-radius:16px;padding:.85rem 1.1rem;margin-bottom:1.25rem}
+.freenote span{color:var(--accent);margin-left:.4rem;text-decoration:underline}.freenote b{font-weight:600}
+.freehead .freetime{font-size:1.6rem;font-weight:600;margin:.1rem 0}
+.fbar{height:.6rem;border-radius:4px;background:var(--line);margin:.8rem 0 .4rem;overflow:hidden}.fbar b{display:block;height:100%;background:var(--c-free)}.fbar b.over{background:var(--rose)}
+.freegrid{display:grid;gap:1.25rem;align-items:start}@media (min-width:860px){.freegrid{grid-template-columns:1.1fr 1fr}}.freegrid .panel{margin:0}
+.freelist{list-style:none;margin:0;padding:0}.freelist li{display:flex;gap:.6rem;align-items:center;padding:.5rem 0;border-top:1px solid var(--line)}
+.freelist .ft{flex:1}.freelist li.d .ft{text-decoration:line-through;color:var(--muted)}
+.sug .btn{white-space:nowrap;flex:none}.sug{display:flex;gap:.8rem;align-items:center;justify-content:space-between;padding:.6rem 0;border-top:1px solid var(--line)}
+.focus .cls{margin-top:1rem}
+.focus .clsitem{background:color-mix(in srgb,var(--bg) 10%,transparent);border-color:color-mix(in srgb,var(--bg) 22%,transparent);color:inherit}
+.focus .clsitem a{color:inherit;opacity:.85;text-decoration:underline}
+.focus .clsitem .check{border-color:currentColor}.focus .clsitem .check:checked{background:var(--bg);border-color:var(--bg)}.focus .clsitem .check:checked::after{border-color:var(--ink)}
+.recheck{background:none;border:0;margin:1rem 0 0;color:inherit}.recheck summary{padding:.3rem 0;font-size:.9rem;opacity:.8;font-weight:400}.recheck summary::after{color:inherit}
 .focusnote,.runedit input{margin-top:.6rem;max-width:26rem;background:color-mix(in srgb,var(--bg) 14%,transparent)!important;color:inherit!important;border-color:color-mix(in srgb,var(--bg) 30%,transparent)!important}
 .focusnote::placeholder,.runedit input::placeholder{color:inherit;opacity:.6}
 .runedit{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.7rem}.runedit .clschips{width:100%}.runedit input{margin-top:0;flex:1;min-width:12rem}
@@ -276,6 +292,7 @@ details .try b{font-weight:600}
       <a href="#due">Due by tomorrow</a>
       <a href="#start">Help me start</a>
       <a href="#assignments">Assignments</a>
+      <a href="#free">Free period</a>
       <a href="#tests">Test plans</a>
       <a href="#strategies">Strategies</a>
       <a href="#calm">Calm down</a>
@@ -300,8 +317,8 @@ details .try b{font-weight:600}
     </div>
   </div>
 
-  <div id="classPages"></div>
 
+  <div id="freeNote"></div>
   <div class="today-grid"><div id="dueSoon"></div>
   <div id="todaySessions"></div></div>
 
@@ -438,6 +455,13 @@ details .try b{font-weight:600}
   <div id="plans"></div>
 </section>
 
+<!-- FREE PERIOD -->
+<section data-view="free" aria-labelledby="h-free">
+  <h2 id="h-free">Free Period To-Do</h2>
+  <p class="intro">Free periods disappear fast when you decide what to do once you’re there. Pick 2 or 3 things ahead of time, and the time is yours to use well.</p>
+  <div id="freeBody"></div>
+</section>
+
 <!-- STRATEGIES -->
 <section data-view="strategies" aria-labelledby="h-str">
   <h2 id="h-str">Study strategies that fit how you think</h2>
@@ -511,7 +535,7 @@ function dueLabel(s){const n=diff(s);
 $('#pDate').value=iso(addDays(today(),5));
 
 /* routing */
-const views=['today','due','start','assignments','tests','strategies','calm'];
+const views=['today','due','start','assignments','free','tests','strategies','calm'];
 function route(){let v=location.hash.slice(1);if(!views.includes(v))v='today';
   document.querySelectorAll('section[data-view]').forEach(s=>s.classList.toggle('on',s.dataset.view===v));
   document.documentElement.style.setProperty('--secnow','var(--c-'+v+')');
@@ -520,7 +544,7 @@ function route(){let v=location.hash.slice(1);if(!views.includes(v))v='today';
 addEventListener('hashchange',route);
 
 /* assignments */
-function sorted(){return S.assignments.slice().sort((a,b)=>a.due<b.due?-1:a.due>b.due?1:0)}
+function sorted(){const mt=a=>{try{const id=courseId(a.cls);const m=id?meetTime(id,a.due):null;return m===null?9999:m}catch(e){return 9999}};return S.assignments.slice().sort((a,b)=>a.due<b.due?-1:a.due>b.due?1:mt(a)-mt(b))}
 function nextUp(){return sorted().find(a=>!a.done)}
 const TYPES={test:'Test',quiz:'Quiz',project:'Project',paper:'Paper'};let planFor=null;
 const guessType=t=>/\bquiz/i.test(t)?'quiz':/\b(test|exam|midterm)\b/i.test(t)?'test':/\bproject\b/i.test(t)?'project':/\b(essay|paper)\b/i.test(t)?'paper':'hw';
@@ -593,22 +617,88 @@ document.addEventListener('submit',e=>{const f=e.target;if(!f.classList.contains
   if(a){a.steps.push({t:v,done:false});save();renderAll();const nf=(document.querySelector('section[data-view].on')||document).querySelector(`.addstep[data-id="${a.id}"] input`);if(nf)nf.focus()}});
 
 /* focus card */
-function clsNudge(){const ids=checkedToday();const left=COURSES.filter(c=>!ids.includes(c.id));if(!left.length)return '';
-  return `<div class="step" style="border-left:4px solid var(--sun)"><b>Before you start: check your class pages.</b> Teachers change things that never show up on the Canvas calendar. ${left.length===COURSES.length?'All '+left.length:left.length} left: ${left.map(c=>esc(c.name)).join(', ')}. <a href="#" data-goclasses style="color:inherit;font-weight:500">Go to class pages</a></div>`}
-document.addEventListener('click',e=>{if(e.target.closest('[data-goclasses]')){e.preventDefault();const el=$('#classPages');el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'})}});
+/* her weekly schedule (class order each day) */
+const SCHED={1:[['chem','8:30'],['span','10:20'],['eng','11:20'],['apwh','12:15'],['alg','1:50']],
+  2:[['chem','9:00'],['span','11:10'],['alg','1:30']],
+  3:[['chem','7:40'],['eng','10:05'],['apwh','11:35']],
+  4:[['chem','9:00'],['span','11:10'],['alg','1:30']],
+  5:[['eng','10:05'],['apwh','11:35']]};
+const FREE={1:['9:25','10:10'],3:['8:30','9:50'],5:['8:30','9:50']};
+const toMin=t=>{let[h,m]=t.split(':').map(Number);if(h<7)h+=12;return h*60+m};
+const ampm=t=>{const h=+t.split(':')[0];return t+(h>=7&&h<12?' am':' pm')};
+const courseId=cls=>{const g=clsGroup(cls);const c=COURSES.find(x=>x.name===g);return c?c.id:null};
+const courseName=id=>(COURSES.find(c=>c.id===id)||{}).name||'';
+function meetTime(id,dateIso){const s=SCHED[parse(dateIso).getDay()]||[];const k=s.findIndex(x=>x[0]===id);return k<0?null:toMin(s[k][1])}
+const nowMin=()=>{const d=new Date();return d.getHours()*60+d.getMinutes()};
+/* the next free period: today (if not over) or the next school day that has one */
+function nextFree(){for(let i=0;i<8;i++){const d=addDays(today(),i);const f=FREE[d.getDay()];if(!f)continue;if(i===0&&nowMin()>=toMin(f[1]))continue;
+  return {date:iso(d),i,start:f[0],end:f[1],len:toMin(f[1])-toMin(f[0]),now:i===0&&nowMin()>=toMin(f[0])}}return null}
+const freeWhen=f=>f.i===0?(f.now?'Right now':'Today'):f.i===1?'Tomorrow':parse(f.date).toLocaleDateString(undefined,{weekday:'long'});
+function freeSuggestions(f){const out=[];const D=f.date;const fEnd=toMin(f.end);
+  const open=sorted().filter(a=>!a.done);
+  open.filter(a=>a.due<D&&a.type!=='test'&&a.type!=='quiz').slice(0,1).forEach(a=>out.push({t:'Catch up: '+a.title,min:20,cls:clsGroup(a.cls),why:'It\u2019s overdue, so getting it off your plate will feel good.'}));
+  open.filter(a=>a.due===D&&a.type!=='test'&&a.type!=='quiz').forEach(a=>{const id=courseId(a.cls);const mt=id?meetTime(id,D):null;
+    if(mt!==null&&mt>fEnd)out.push({t:'Work on: '+a.title,min:20,cls:clsGroup(a.cls),why:'It\u2019s due in '+courseName(id)+' later that day.'})});
+  open.filter(a=>(a.type==='test'||a.type==='quiz')&&a.due>=D&&diff(a.due)-f.i<=3).slice(0,1).forEach(a=>out.push({t:'Study for '+a.title+' with flashcards or practice questions',min:20,cls:clsGroup(a.cls),why:'Short study sessions spread over a few days stick better than cramming.'}));
+  const next=(SCHED[parse(D).getDay()]||[]).find(x=>toMin(x[1])>=fEnd);
+  if(next)out.push({t:'Look over your '+courseName(next[0])+' notes before class',min:5,cls:courseName(next[0]),why:'A quick preview makes class easier to follow.'});
+  if(f.i===0&&COURSES.some(c=>!checkedToday().includes(c.id)))out.push({t:'Check your class pages',min:5,cls:'Other',why:'Catch changes before they surprise you.'});
+  out.push({t:'Email or visit a teacher with one question',min:5,cls:'Other',why:'Asking early is easier than catching up later.'});
+  out.push({t:'Clean out your backpack and file loose papers',min:10,cls:'Other',why:'Less clutter means less to keep track of.'});
+  out.push({t:'Stretch, get water, and walk before your next class',min:5,cls:'Other',why:'Moving resets your focus.'});
+  const have=new Set((S.free||[]).map(x=>x.t.toLowerCase()));
+  return out.filter(x=>!have.has(x.t.toLowerCase())).slice(0,5)}
+function cleanFree(){const t=iso(today());S.free=(S.free||[]).filter(x=>!(x.done&&x.doneOn&&x.doneOn<t))}
+function renderFree(){cleanFree();const f=nextFree();const L=S.free||[];const el=$('#freeBody');
+  if(!f){el.innerHTML='<div class="empty">No free periods on the schedule.</div>';return}
+  const planned=L.filter(x=>!x.done).reduce((n,x)=>n+(x.min||0),0);const pct=Math.min(100,Math.round(planned/f.len*100));const over=planned>f.len;
+  const sug=freeSuggestions(f);
+  el.innerHTML=`<div class="panel freehead"><div class="sub">${freeWhen(f)}${f.i>1?', '+parse(f.date).toLocaleDateString(undefined,{month:'short',day:'numeric'}):''}</div>
+      <div class="freetime">${ampm(f.start)} \u2013 ${ampm(f.end)}</div><div class="sub">${f.len} minutes. Check in at the office first.</div>
+      <div class="fbar" aria-label="${planned} of ${f.len} minutes planned"><b style="width:${pct}%" class="${over?'over':''}"></b></div>
+      <div class="sub">${planned?`${planned} of ${f.len} minutes planned.`:'Nothing planned yet.'} ${over?'That\u2019s more than fits. Pick the most important ones.':planned&&f.len-planned>=10?'Leave a little room. Things often take longer than we think.':''}</div></div>
+    <div class="freegrid"><div class="panel"><h3>My free period plan</h3>
+      ${L.length?`<ul class="freelist">${L.map((x,i)=>`<li class="${x.done?'d':''}"><input type="checkbox" class="check" data-free="${i}" ${x.done?'checked':''} aria-label="Done: ${esc(x.t)}"><span class="ft">${esc(x.t)}${x.min?`<span class="sub"> \u00b7 ${x.min} min</span>`:''}</span>${x.done?'':`<button class="btn small" data-freestart="${i}">Start</button>`}<button class="x" data-freedel="${i}" aria-label="Remove ${esc(x.t)}">\u00d7</button></li>`).join('')}</ul>`
+        :'<p class="sub">Add 2 or 3 things below, or tap a suggestion. Deciding now means you won\u2019t have to decide when you get there.</p>'}
+      <div class="row" style="margin-top:.8rem"><input type="text" id="freeText" placeholder="Something to do (like: Spanish vocab flashcards)" maxlength="80" aria-label="Add something to your free period plan" style="flex:1;min-width:12rem">
+        <select id="freeMin" aria-label="About how many minutes?" style="width:auto"><option value="0">Minutes?</option>${[5,10,15,20,25,30,45].map(m=>`<option value="${m}">${m} min</option>`).join('')}</select>
+        <button class="btn small" id="freeAdd" type="button">Add</button></div>
+      ${L.some(x=>x.done)?'<button class="icon" id="freeClear" style="padding-left:0;margin-top:.4rem">Clear finished</button>':''}</div>
+    <div class="panel"><h3>Ideas for this free period</h3>${sug.length?sug.map((x,i)=>`<div class="sug"><div><div class="t">${esc(x.t)} <span class="sub">\u00b7 ${x.min} min</span></div><div class="sub">${esc(x.why)}</div></div><button class="btn ghost small" data-sugadd="${i}" style="color:var(--accent)">+ Add</button></div>`).join(''):'<p class="sub">You\u2019ve added all the ideas. Nice planning.</p>'}</div></div>`;
+  el._sug=sug}
+document.addEventListener('click',e=>{const t=e.target;const el=$('#freeBody');
+  const sa=t.closest('[data-sugadd]');if(sa&&el._sug){const x=el._sug[+sa.dataset.sugadd];S.free=(S.free||[]);S.free.push({t:x.t,min:x.min,cls:x.cls,done:false});save();renderFree();renderFreeNote()}
+  if(t.id==='freeAdd'){const v=$('#freeText').value.trim();if(!v){$('#freeText').focus();return}S.free=(S.free||[]);S.free.push({t:v,min:+$('#freeMin').value||0,done:false});save();renderFree();renderFreeNote();$('#freeText').focus()}
+  const fd=t.closest('[data-freedel]');if(fd){S.free.splice(+fd.dataset.freedel,1);save();renderFree();renderFreeNote()}
+  if(t.id==='freeClear'){S.free=S.free.filter(x=>!x.done);save();renderFree();renderFreeNote()}
+  const fs=t.closest('[data-freestart]');if(fs){const x=S.free[+fs.dataset.freestart];const g=x.cls||clsGroup(x.t);startTimer(x.min||0,{cls:g,note:x.t})}});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.free!==undefined){const x=S.free[+t.dataset.free];x.done=t.checked;x.doneOn=t.checked?iso(today()):null;save();renderFree();renderFreeNote()}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='freeText'){e.preventDefault();$('#freeAdd').click()}});
+/* a one-line note on Today when a free period is today, or tomorrow (plan it ahead) */
+function renderFreeNote(){const f=nextFree();const el=$('#freeNote');if(!f||f.i>1){el.innerHTML='';return}
+  const n=(S.free||[]).filter(x=>!x.done).length;
+  el.innerHTML=`<a href="#free" class="freenote"><b>${f.now?'Free period now':'Free period '+(f.i===0?'today':'tomorrow')}, ${ampm(f.start)}\u2013${ampm(f.end)}.</b> ${n?n+' thing'+(n===1?'':'s')+' planned.':'Plan it now so you know what to do when you get there.'} <span>Open</span></a>`}
+/* early start reminder for Wednesday zero period */
+function earlyNote(){const d=today().getDay();if(d===2)return '<div class="early">Tomorrow: Chemistry starts at 7:40 am (zero period). Get to school early.</div>';
+  if(d===3&&nowMin()<toMin('7:40'))return '<div class="early">Today: Chemistry at 7:40 am. Head out early.</div>';return ''}
+
 function renderFocus(){const a=nextUp();const b=$('#focusBody');
-  const nu=nextUp();const startBtns=`<div class="startpick"><div style="opacity:.75;font-size:.9rem;margin-bottom:.35rem">Which class?</div>${chipsHTML(defaultCls(),'data-pickcls')}
+  const startBtns=`<div class="startpick"><div style="opacity:.75;font-size:.9rem;margin-bottom:.35rem">Which class?</div>${chipsHTML(defaultCls(),'data-pickcls')}
     <input type="text" id="focusNote" class="focusnote" placeholder="What are you working on? (optional)" maxlength="80" aria-label="What are you working on?"></div><div class="starts"><span class="lbl">You don’t have to finish. Just start for:</span>
     <button class="btn light" data-act="start" data-min="5">5 minutes</button>
     <button class="btn light" data-act="start" data-min="10">10 minutes</button>
     <button class="btn light" data-act="start" data-min="25">25 minutes</button>
     <button class="btn ghost" data-act="start" data-min="0">No limit</button>
     <a href="#start" class="stuck">Stuck? Get help starting</a></div>`;
-  if(!a){b.innerHTML=`<p class="q">Your next step</p><p class="task">You’re all caught up.</p><p class="meta">Add anything new below as soon as you hear about it. Or use the time to get ahead on a test plan.</p>`+clsNudge()+startBtns;return}
-  const d=dueLabel(a.due);const st=a.steps.find(s=>!s.done);
-  b.innerHTML=`<p class="q">Your next step</p><span class="pill u-${d.c}">${d.t}</span><p class="task">${esc(a.title)}</p>
-    <p class="meta">${esc(a.cls||'')}</p>${clsNudge()}
-    ${st?`<div class="step">First, just this: <b>${esc(st.t)}</b></div>`:(a.size==='l'?`<div class="step">This one’s big. Try breaking it into steps on the Assignments tab first.</div>`:'')}`+startBtns;}
+  const ids=checkedToday();const left=COURSES.filter(c=>!ids.includes(c.id));
+  const dow=today().getDay();const sd=SCHED[dow]?dow:1;const todays=SCHED[sd];
+  const ordered=todays.map(x=>({c:COURSES.find(c=>c.id===x[0]),time:x[1]})).concat(COURSES.filter(c=>!todays.some(x=>x[0]===c.id)).map(c=>({c,time:null})));
+  const grid=`<p style="opacity:.75;font-size:.9rem;margin:.8rem 0 0">${SCHED[dow]?'In the order you have them today:':'In Monday’s order:'}</p><div class="cls">${ordered.map(({c,time})=>{const d=ids.includes(c.id);return `<div class="clsitem ${d?'d':''}"><input type="checkbox" class="check" data-cls="${c.id}" ${d?'checked':''} aria-label="Checked ${esc(c.name)} today"><div><div class="nm">${esc(c.name)}</div><div class="when2">${time?ampm(time):'No class '+(SCHED[dow]?'today':'Monday')}</div>${c.links.map(l=>`<a href="${esc(l[1])}" target="_blank" rel="noopener" data-clslink="${c.id}">${esc(l[0])} ↗</a>`).join('')}</div></div>`}).join('')}</div>`;
+  if(left.length){b.innerHTML=earlyNote()+`<p class="q">Your first step</p><p class="task">Check your class pages</p>
+    <p class="meta">Teachers change things that never show up on the Canvas calendar. Open each one and add anything new. ${COURSES.length-left.length} of ${COURSES.length} done.</p>${grid}`;return}
+  b.innerHTML=earlyNote()+`<p class="q">✓ Class pages checked today</p><p class="task">Ready to work?</p>
+    <p class="meta">Pick something from Coming up below, or choose a class and start a timer.</p>${startBtns}
+    <details class="recheck"><summary>Look at class pages again</summary>${grid}</details>`;}
 
 /* timer */
 /* timer + time log (by class, with an optional note) */
@@ -778,19 +868,16 @@ const COURSES=[
  {id:'apwh',name:'AP World History II',links:[['Week at a glance','https://kinkaid.instructure.com/courses/8231'],['Assignment sheet','https://docs.google.com/spreadsheets/d/11tNr60FAeR-ZvBdj6X0MPfvX46bS-NnULXbXHnrljLg/edit?gid=0#gid=0']]}
 ];
 function checkedToday(){const t=iso(today());if(!S.cls||S.cls.date!==t)S.cls={date:t,ids:[]};return S.cls.ids}
-function renderClasses(){const ids=checkedToday();const n=COURSES.filter(c=>ids.includes(c.id)).length;const all=n===COURSES.length;
-  $('#classPages').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Check your class pages</h3><span class="sub">${all?'All checked today. Nice.':n+' of '+COURSES.length+' checked today'}</span></div>
-    <p class="sub" style="margin:.3rem 0 0">Teachers post things that don’t always show up on the Canvas calendar. Take a quick look at each one, and add anything new below.</p>
-    <div class="cls">${COURSES.map(c=>{const d=ids.includes(c.id);return `<div class="clsitem ${d?'d':''}"><input type="checkbox" class="check" data-cls="${c.id}" ${d?'checked':''} aria-label="Checked ${esc(c.name)} today"><div><div class="nm">${esc(c.name)}</div>${c.links.map(l=>`<a href="${esc(l[1])}" target="_blank" rel="noopener" data-clslink="${c.id}">${esc(l[0])} ↗</a>`).join('')}</div></div>`}).join('')}</div></div>`}
+function renderClasses(){}
 function markCls(id,on){const ids=checkedToday();const i=ids.indexOf(id);if(on&&i<0)ids.push(id);if(!on&&i>=0)ids.splice(i,1);save();renderClasses();renderFocus();renderDue()}
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.cls)markCls(t.dataset.cls,t.checked)});
 document.addEventListener('click',e=>{const a=e.target.closest('[data-clslink]');if(a)setTimeout(()=>markCls(a.dataset.clslink,true),50)});
 const LEGEND='<div class="legend" aria-label="Color key"><span><i style="background:var(--rose)"></i>Overdue</span><span><i style="background:var(--sun)"></i>Due today or tomorrow</span><span><i style="background:var(--later)"></i>Later</span></div>';
 function renderTodaySessions(){const ts=iso(today());const tm=iso(addDays(today(),1));const f=nextUp();
   /* coming up: a short list */
-  const up=sorted().filter(a=>!a.done&&(!f||a.id!==f.id)).slice(0,3);
+  const up=sorted().filter(a=>!a.done).slice(0,5);
   const dueCount=S.assignments.filter(a=>!a.done&&a.due<=tm).length;
-  $('#dueSoon').innerHTML=up.length?`<div class="panel"><h3>Coming up</h3>${LEGEND}${up.map(a=>{const d=dueLabel(a.due);return `<div class="item u-${d.c}" style="background:var(--bg)"><input type="checkbox" class="check" data-act="done" data-id="${a.id}" aria-label="Mark done: ${esc(a.title)}"><div><div class="t">${esc(a.title)}</div><div class="sub"><span class="tag ${d.c}">${d.t}</span>${esc(a.cls||'')}</div></div><span></span></div>`}).join('')}
+  $('#dueSoon').innerHTML=up.length?`<div class="panel"><h3>Coming up</h3>${LEGEND}${up.map(a=>{const d=dueLabel(a.due);return `<div class="item u-${d.c}" style="background:var(--bg)"><input type="checkbox" class="check" data-act="done" data-id="${a.id}" aria-label="Mark done: ${esc(a.title)}"><div><div class="t">${esc(a.title)}</div><div class="sub"><span class="tag ${d.c}">${d.t}</span>${esc(a.cls||'')}</div>${S.run&&S.run.aid===a.id?`<button class="btn small" data-work="${a.id}" style="margin-top:.4rem">■ Stop and save time</button>`:`<button class="btn ghost small" data-work="${a.id}" style="color:var(--accent);margin-top:.4rem">▶ Start working</button>`}</div><span></span></div>`}).join('')}
     ${dueCount?`<a href="#due" class="icon" style="color:var(--accent);padding-left:0;text-decoration:none;display:inline-block">See everything due by tomorrow (${dueCount})</a>`:''}</div>`:'';
   /* next test or quiz */
   const a=sorted().find(x=>!x.done&&(x.type==='test'||x.type==='quiz')&&diff(x.due)>=0);
@@ -1138,7 +1225,7 @@ $('#feedSave').onclick=()=>{const u=feedFix($('#feedUrl').value);if(!/^https:\/\
 $('#feedClear').onclick=()=>{delete S.canvasUrl;save();$('#feedUrl').value='';$('#feedMsg').textContent='';renderImport()};
 function renderImport(){$('#feedClear').hidden=!S.canvasUrl;if(S.canvasUrl&&!$('#feedUrl').value)$('#feedUrl').value=S.canvasUrl;$('#lastImport').textContent=S.lastImport?'Last imported '+(S.lastImport===iso(today())?'today':dayName(S.lastImport)):''}
 
-function renderAll(){renderClasses();renderTime();renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
+function renderAll(){renderClasses();renderFree();renderFreeNote();renderTime();renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
 clearPast();renderAll();route();pullFeed(false);
 if(S.run&&Date.now()-S.run.start>12*3600e3){S.run=null;save()}
 renderRun();
