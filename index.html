@@ -349,7 +349,12 @@ details .try b{font-weight:600}
       </ol>
       <p class="hint" style="margin-top:0">If your browser tries to open it in a calendar app instead, try Chrome. Only assignments due today or later come in, and old ones are cleared each time you import. Canvas doesn’t say what you’ve turned in, so check things off here as you finish them.</p>
     </details>
+    <div style="margin-top:.5rem"><label for="feedUrl">Automatic updates: paste your Calendar Feed link once</label>
+      <div class="row"><input type="text" id="feedUrl" placeholder="https://…instructure.com/feeds/calendars/user_….ics" autocomplete="off" style="flex:1;min-width:14rem"><button class="btn small" id="feedSave" type="button">Save and update</button><button class="icon" id="feedClear" type="button" hidden>Remove link</button></div>
+      <p class="hint" style="margin-top:.3rem">If it works, your assignments update every time you open the site. Keep this link private, like a password.</p></div>
+    <p class="import-msg" id="feedMsg" aria-live="polite"></p>
     <div class="row" style="margin-top:.5rem">
+      <span class="sub" style="width:100%">Or bring in the downloaded file:</span>
       <input type="file" id="icsFile" class="vh" accept=".ics,text/calendar">
       <label for="icsFile" class="btn">Choose Canvas file</label>
       <span class="sub" id="lastImport"></span>
@@ -861,7 +866,7 @@ $('#bulkFile').addEventListener('change',async e=>{const inp=e.target;const f=in
     else if(n.endsWith('.docx')){const rows=await docxRows(f);if(!(rows&&runTable(rows)))runBulk(await fileText(f))}
     else runBulk(await fileText(f))}
   catch(err){bulkMsg(fileErr(err),'err')}inp.value='';});
-$('#bulkFind').addEventListener('click',()=>{const t=$('#bulkPaste').value.trim();if(!t){bulkMsg('Paste the sheet’s text first.','err');return}if(!(looksTable(t)&&runTable(parseDelim(t,'\t'))))runBulk(t)});
+$('#bulkFind').addEventListener('click',()=>{const t=$('#bulkPaste').value.trim();if(!t){bulkMsg('Paste the sheet’s text first.','err');return}const raw=$('#bulkPaste').value.replace(/^\s*\n/,'').replace(/\s+$/,'');if(!(looksTable(raw)&&runTable(parseDelim(raw,'\t'))))runBulk(t)});
 
 /* photo reading (only inside Claude) */
 function photoError(e){const c=e&&e.code;
@@ -906,7 +911,7 @@ function icsDate(v){const m=/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z)?
   else d=new Date(+m[1],m[2]-1,+m[3]);
   return iso(d);}
 function importMsg(t,cls){const el=$('#importMsg');el.textContent=t;el.className='import-msg '+(cls||'')}
-function importICS(text){
+function importICS(text,auto){
   const evs=parseICS(text);
   if(!evs.length){importMsg('That file doesn’t have any calendar events in it. Make sure it’s the .ics file from Canvas’s Calendar Feed link.','err');return}
   const cutoff=iso(today());let added=0,updated=0,old=0;
@@ -921,15 +926,29 @@ function importICS(text){
     else{S.assignments.push({id:uid(),uid:key,src:'canvas',title,cls,due,size:'m',type:guessType(title),done:false,steps:[]});added++}});
   S.lastImport=iso(today());save();renderAll();
   const cl=cleared?' Cleared '+cleared+' past-due Canvas item'+(cleared===1?'':'s')+'.':'';
+  if(auto){$('#feedMsg').className='import-msg ok';$('#feedMsg').textContent='Updated from Canvas '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(added?'. '+added+' new.':'.');return}
   if(!added&&!updated)importMsg('You’re up to date. Nothing new since your last import.'+cl,'ok');
   else importMsg('Added '+added+' new'+(updated?', updated '+updated:'')+'. Pick the biggest one and break it into small steps.'+cl,'ok');}
 $('#icsFile').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
   try{importICS(await f.text())}catch(err){importMsg('Couldn’t read that file. Try downloading it again from Canvas.','err')}
   e.target.value='';});
-function renderImport(){$('#lastImport').textContent=S.lastImport?'Last imported '+(S.lastImport===iso(today())?'today':dayName(S.lastImport)):''}
+/* past Canvas and sheet items clear themselves (manual ones stay) */
+function clearPast(){const t=iso(today());const n=S.assignments.length;
+  S.assignments=S.assignments.filter(a=>!((a.src==='canvas'||a.src==='sheet')&&a.due<t&&!a.steps.length&&!(a.reqs&&a.reqs.length)));
+  if(S.assignments.length!==n)save()}
+/* live Canvas feed (works only if Canvas allows it) */
+const feedFix=u=>u.trim().replace(/^webcal:\/\//i,'https://');
+async function pullFeed(showWork){const u=S.canvasUrl;if(!u)return;const m=$('#feedMsg');
+  if(showWork){m.className='import-msg';m.textContent='Checking Canvas…'}
+  try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw 0;const t=await r.text();if(!/BEGIN:VCALENDAR/.test(t))throw 0;importICS(t,true)}
+  catch(e){m.className='import-msg err';m.textContent='Canvas didn’t allow the site to update automatically. Use “Choose Canvas file” below instead.'}}
+$('#feedSave').onclick=()=>{const u=feedFix($('#feedUrl').value);if(!/^https:\/\/\S+/i.test(u)){$('#feedMsg').className='import-msg err';$('#feedMsg').textContent='Paste the whole link from Canvas’s Calendar Feed.';return}
+  S.canvasUrl=u;save();renderImport();pullFeed(true)};
+$('#feedClear').onclick=()=>{delete S.canvasUrl;save();$('#feedUrl').value='';$('#feedMsg').textContent='';renderImport()};
+function renderImport(){$('#feedClear').hidden=!S.canvasUrl;if(S.canvasUrl&&!$('#feedUrl').value)$('#feedUrl').value=S.canvasUrl;$('#lastImport').textContent=S.lastImport?'Last imported '+(S.lastImport===iso(today())?'today':dayName(S.lastImport)):''}
 
 function renderAll(){renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
-renderAll();route();
+clearPast();renderAll();route();pullFeed(false);
 })();
 </script>
 </body>
