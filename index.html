@@ -992,6 +992,13 @@ function renderImport(){$('#feedClear').hidden=!S.canvasUrl;if(S.canvasUrl&&!$('
 
 function renderAll(){renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
 clearPast();renderAll();route();pullFeed(false);
+/* keep dates current if the page stays open overnight */
+let shownDay=iso(today());
+function refreshDay(){const d=iso(today());if(d!==shownDay){shownDay=d;clearPast();renderAll()}}
+setInterval(refreshDay,60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshDay()});
+addEventListener('focus',refreshDay);
+addEventListener('pageshow',refreshDay);
 })();
 </script>
 </body>
