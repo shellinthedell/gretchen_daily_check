@@ -94,6 +94,18 @@ section[data-view].on{display:block}
 .rb-time{font-size:1.35rem;font-weight:600;font-variant-numeric:tabular-nums;min-width:4.5rem}
 .rb-lbl{opacity:.75;font-size:.9rem}.rb-msg{flex:1;min-width:12rem}
 .runbar .btn.small{background:var(--bg);color:var(--ink)}
+.clschips{display:flex;flex-wrap:wrap;gap:.4rem}
+.clschip{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:.4rem .85rem;font-size:.92rem;cursor:pointer;min-height:2.5rem}
+.clschip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+.focus .clschip,.runbar .clschip{background:transparent;color:inherit;border-color:color-mix(in srgb,var(--bg) 35%,transparent)}
+.focus .clschip[aria-pressed="true"],.runbar .clschip[aria-pressed="true"]{background:var(--bg);color:var(--ink);border-color:var(--bg)}
+.startpick{margin-bottom:1rem}
+.focusnote,.runedit input{margin-top:.6rem;max-width:26rem;background:color-mix(in srgb,var(--bg) 14%,transparent)!important;color:inherit!important;border-color:color-mix(in srgb,var(--bg) 30%,transparent)!important}
+.focusnote::placeholder,.runedit input::placeholder{color:inherit;opacity:.6}
+.runedit{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.7rem}.runedit .clschips{width:100%}.runedit input{margin-top:0;flex:1;min-width:12rem}
+.timer .runedit{justify-content:center}.timer .runedit .clschips{justify-content:center}
+.linkbtn{background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font-size:.9rem;opacity:.85;padding:.2rem}
+.runlbl{font-weight:600}
 .worksel{width:auto;max-width:100%;min-height:2.4rem;padding:.3rem .6rem;font-size:.92rem}
 .runbar .worksel,.focus .worksel{background:color-mix(in srgb,var(--bg) 14%,transparent);color:inherit;border-color:color-mix(in srgb,var(--bg) 30%,transparent);flex:1;min-width:12rem;max-width:26rem}
 .runbar .worksel option,.focus .worksel option{color:#1F2A44;background:#fff}
@@ -574,7 +586,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
     if(a&&act==='delreq'&&a.reqs){a.reqs.splice(+t.dataset.i,1);save();renderAll()}}
   if(t.dataset.act==='plan'){const a=S.assignments.find(x=>x.id===t.dataset.id);if(a){planFor=a.id;$('#pName').value=a.title+(a.cls?' ('+a.cls+')':'');$('#pDate').value=a.due;location.hash='tests';setTimeout(()=>$('#pTopics').focus(),60)}}
   if(t.dataset.act==='delplan'){S.plans=S.plans.filter(x=>x.id!==t.dataset.id);save();renderAll()}
-  if(t.dataset.act==='start'){const sel=document.getElementById('focusWork');startTimer(+t.dataset.min,t.dataset.aid!==undefined?t.dataset.aid:(sel?sel.value:undefined))}
+  if(t.dataset.act==='start'){const fn=document.getElementById('focusNote');startTimer(+t.dataset.min,t.dataset.aid!==undefined?fromAid(t.dataset.aid):{cls:defaultCls(),note:fn?fn.value:''})}
 });
 document.addEventListener('submit',e=>{const f=e.target;if(!f.classList.contains('addstep'))return;e.preventDefault();
   const v=f.querySelector('input').value.trim();if(!v)return;const a=S.assignments.find(x=>x.id===f.dataset.id);
@@ -585,7 +597,8 @@ function clsNudge(){const ids=checkedToday();const left=COURSES.filter(c=>!ids.i
   return `<div class="step" style="border-left:4px solid var(--sun)"><b>Before you start: check your class pages.</b> Teachers change things that never show up on the Canvas calendar. ${left.length===COURSES.length?'All '+left.length:left.length} left: ${left.map(c=>esc(c.name)).join(', ')}. <a href="#" data-goclasses style="color:inherit;font-weight:500">Go to class pages</a></div>`}
 document.addEventListener('click',e=>{if(e.target.closest('[data-goclasses]')){e.preventDefault();const el=$('#classPages');el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'})}});
 function renderFocus(){const a=nextUp();const b=$('#focusBody');
-  const nu=nextUp();const startBtns=`<div class="row" style="margin-bottom:.8rem"><label for="focusWork" style="color:inherit;opacity:.8;margin:0">Working on</label><select id="focusWork" class="worksel">${workOptions(nu?nu.id:'')}</select></div><div class="starts"><span class="lbl">You don’t have to finish. Just start for:</span>
+  const nu=nextUp();const startBtns=`<div class="startpick"><div style="opacity:.75;font-size:.9rem;margin-bottom:.35rem">Which class?</div>${chipsHTML(defaultCls(),'data-pickcls')}
+    <input type="text" id="focusNote" class="focusnote" placeholder="What are you working on? (optional)" maxlength="80" aria-label="What are you working on?"></div><div class="starts"><span class="lbl">You don’t have to finish. Just start for:</span>
     <button class="btn light" data-act="start" data-min="5">5 minutes</button>
     <button class="btn light" data-act="start" data-min="10">10 minutes</button>
     <button class="btn light" data-act="start" data-min="25">25 minutes</button>
@@ -598,91 +611,96 @@ function renderFocus(){const a=nextUp();const b=$('#focusBody');
     ${st?`<div class="step">First, just this: <b>${esc(st.t)}</b></div>`:(a.size==='l'?`<div class="step">This one’s big. Try breaking it into steps on the Assignments tab first.</div>`:'')}`+startBtns;}
 
 /* timer */
-/* timer + time log */
-const C=2*Math.PI*44;$('#prog').style.strokeDasharray=C;let tInt=null,justDone=null;
+/* timer + time log (by class, with an optional note) */
+const C=2*Math.PI*44;$('#prog').style.strokeDasharray=C;let tInt=null,justDone=null,editOpen=false;
 const fmtMin=m=>m<60?m+' min':Math.floor(m/60)+' hr'+(m%60?' '+(m%60)+' min':'');
 const fmtClock=sec=>{sec=Math.max(0,Math.round(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=sec%60;return (h?h+':'+pad(m):m)+':'+pad(x)};
-/* what she's working on: an assignment id, or "cls:Class name", or "" for other */
-function workKey(r){return r.aid?r.aid:(r.cls?'cls:'+r.cls:'')}
-function workName(r){const a=r.aid&&S.assignments.find(x=>x.id===r.aid);if(a)return a.title;return r.cls?r.cls+' (general work)':'Other homework'}
-function workOptions(sel){const open=sorted().filter(a=>!a.done);
-  return `<optgroup label="Assignments">${open.map(a=>`<option value="${a.id}" ${sel===a.id?'selected':''}>${esc(a.title)}${a.cls?' – '+esc(a.cls):''}</option>`).join('')}</optgroup>
-    <optgroup label="General work in a class">${COURSES.map(c=>`<option value="cls:${esc(c.name)}" ${sel==='cls:'+c.name?'selected':''}>${esc(c.name)}</option>`).join('')}<option value="" ${sel===''?'selected':''}>Something else</option></optgroup>`}
-function keyToWork(k){if(!k)return {aid:null,cls:''};if(k.startsWith('cls:'))return {aid:null,cls:k.slice(4)};const a=S.assignments.find(x=>x.id===k);return {aid:k,cls:a?(a.cls||''):''}}
+const CLASSES=()=>COURSES.map(c=>c.name).concat(['Other']);
+let pickCls=null;
+function defaultCls(){if(pickCls)return pickCls;const n=nextUp();return n?clsGroup(n.cls):COURSES[0].name}
+function chipsHTML(sel,attr){return `<div class="clschips" role="group" aria-label="Which class?">${CLASSES().map(c=>`<button type="button" class="clschip" ${attr}="${esc(c)}" aria-pressed="${c===sel}">${esc(c)}</button>`).join('')}</div>`}
+function fromAid(aid){const a=S.assignments.find(x=>x.id===aid);return a?{cls:clsGroup(a.cls),note:a.title,aid:a.id}:null}
 function logTime(sec,w,dateIso){const m=Math.round(sec/60);if(m<1)return 0;S.log=S.log||[];
-  S.log.push({id:uid(),d:dateIso||iso(today()),m,aid:w.aid||null,label:workName(w),cls:w.aid?((S.assignments.find(x=>x.id===w.aid)||{}).cls||w.cls||''):(w.cls||'')});
+  S.log.push({id:uid(),d:dateIso||iso(today()),m,cls:w.cls||'Other',note:(w.note||'').trim(),aid:w.aid||null});
   if(S.log.length>2000)S.log=S.log.slice(-2000);return m}
-/* start: min=0 means count up with no limit */
-function startTimer(min,key){if(S.run)finishRun(true);justDone=null;
-  if(key===undefined){const n=nextUp();key=n?n.id:''}
-  const w=keyToWork(key);S.run={start:Date.now(),end:min?Date.now()+min*60000:null,aid:w.aid,cls:w.cls,total:0};save();renderAll();renderRun()}
-function switchWork(key){const r=S.run;if(!r)return;const el=(Date.now()-r.start)/1000;r.total=(r.total||0)+logTime(el,r)*1;
-  const w=keyToWork(key);r.aid=w.aid;r.cls=w.cls;r.start=Date.now();save();renderAll();renderRun()}
+/* w = {cls, note, aid}; min=0 means no limit */
+function startTimer(min,w){if(S.run)finishRun(true);justDone=null;editOpen=false;
+  w=w||{cls:defaultCls(),note:''};
+  S.run={start:Date.now(),end:min?Date.now()+min*60000:null,cls:w.cls||'Other',note:w.note||'',aid:w.aid||null,total:0};save();renderAll();renderRun()}
+function switchCls(c){const r=S.run;if(!r||r.cls===c)return;r.total=(r.total||0)+logTime((Date.now()-r.start)/1000,r);
+  r.cls=c;r.note='';r.aid=null;r.start=Date.now();save();renderAll();renderRun();const n=document.querySelector('[data-runnote]');if(n)n.focus()}
 function finishRun(silent){const r=S.run;if(!r)return;let el=(Date.now()-r.start)/1000;if(r.end)el=Math.min(el,(r.end-r.start)/1000);el=Math.min(el,6*3600);
-  const m=logTime(el,r);justDone={m:m,key:workKey(r),name:workName(r),up:!r.end};S.run=null;save();if(!silent){renderAll();renderRun()}}
-function renderRun(){clearInterval(tInt);const r=S.run;const bar=$('#runBar');const onToday=(location.hash||'#today')==='#today'||location.hash==='';
-  if(r){tInt=setInterval(tickRun,250)}
-  /* Today: big ring view */
+  const m=logTime(el,r);justDone={m,cls:r.cls,note:r.note,aid:r.aid,up:!r.end};S.run=null;editOpen=false;save();if(!silent){renderAll();renderRun()}}
+const label=r=>esc(r.cls)+(r.note?' · '+esc(r.note):'');
+function editorHTML(r){return `<div class="runedit">${chipsHTML(r.cls,'data-runcls')}
+  <input type="text" data-runnote value="${esc(r.note)}" placeholder="What are you working on? (optional)" maxlength="80" aria-label="What are you working on?">
+  <button type="button" class="btn small" data-editdone>Done</button></div>`}
+function renderRun(){clearInterval(tInt);const r=S.run;const bar=$('#runBar');const onToday=!location.hash||location.hash==='#today';
+  if(r)tInt=setInterval(tickRun,250);
   if(onToday&&(r||justDone)){$('#focusBody').style.display='none';$('#timer').classList.add('on')}else{$('#timer').classList.remove('on');$('#focusBody').style.display=''}
-  if(r){const sel=`<label class="vh" for="rw1">Working on</label><select id="rw1" class="worksel" data-worksel>${workOptions(workKey(r))}</select>`;
-    $('#timerMsg').innerHTML='Working on '+sel+'<br>Just this. Everything else can wait.';
+  if(r){$('#timerMsg').innerHTML=`<span class="runlbl">${label(r)}</span> ${editOpen?'':'<button class="linkbtn" data-editopen>Change</button>'}${editOpen&&onToday?editorHTML(r):''}<br>Just this. Everything else can wait.`;
     $('#timerBtns').innerHTML='<button class="btn light" data-runstop>Stop and save time</button>';
-    bar.innerHTML=`<div class="wrap rb"><span class="rb-dot" aria-hidden="true"></span><span class="rb-time" id="rbTime"></span><span class="rb-lbl">Working on</span><label class="vh" for="rw2">Working on</label><select id="rw2" class="worksel" data-worksel>${workOptions(workKey(r))}</select><button class="btn small" data-runstop>Stop and save</button></div>`;
+    bar.innerHTML=`<div class="wrap"><div class="rb"><span class="rb-dot" aria-hidden="true"></span><span class="rb-time" id="rbTime"></span><span class="rb-msg">${label(r)}</span>${editOpen?'':'<button class="linkbtn" data-editopen>Change</button>'}<button class="btn small" data-runstop>Stop and save</button></div>${editOpen&&!onToday?editorHTML(r):''}</div>`;
     bar.hidden=onToday;tickRun()}
-  else if(justDone){const j=justDone;const tot=j.key&&!j.key.startsWith('cls:')?timeOn(j.key):0;
-    const msg=(j.m?'Saved '+fmtMin(j.m)+' on '+j.name+'.':'Stopped. Less than a minute, so nothing was saved.')+(tot>j.m?' That’s '+fmtMin(tot)+' on it so far.':'');
+  else if(justDone){const j=justDone;const tot=j.aid?timeOn(j.aid):0;
+    const msg=(j.m?'Saved '+fmtMin(j.m)+' on '+j.cls+(j.note?' ('+j.note+')':'')+'.':'Stopped. Less than a minute, so nothing was saved.')+(tot>j.m?' That’s '+fmtMin(tot)+' on this assignment so far.':'');
     $('#time').textContent=j.up?'Saved':'Done';$('#prog').style.strokeDashoffset=0;
     $('#timerMsg').textContent=msg+(j.up?'':' You started, and that’s the hardest part.');
     $('#timerBtns').innerHTML='<button class="btn light" data-runmore>Keep going</button><button class="btn ghost" data-rundone>I’m done for now</button>';
-    bar.innerHTML=`<div class="wrap rb"><span class="rb-dot done" aria-hidden="true"></span><span class="rb-msg">${esc(msg)}</span><button class="btn small" data-runmore>Keep going</button><button class="icon" data-rundone style="color:inherit">Close</button></div>`;
+    bar.innerHTML=`<div class="wrap"><div class="rb"><span class="rb-dot done" aria-hidden="true"></span><span class="rb-msg">${esc(msg)}</span><button class="btn small" data-runmore>Keep going</button><button class="linkbtn" data-rundone>Close</button></div></div>`;
     bar.hidden=onToday}
   else bar.hidden=true;
   document.body.classList.toggle('hasbar',!bar.hidden)}
-function tickRun(){const r=S.run;if(!r)return;const el=(Date.now()-r.start)/1000+(r.total||0)*60;let txt;
-  if(r.end){const left=(r.end-Date.now())/1000;txt=fmtClock(left);$('#prog').style.strokeDashoffset=C*(1-Math.max(0,left)/((r.end-r.start)/1000+(r.total||0)*60));
-    if(left<=0){finishRun(false);return}}
-  else{txt=fmtClock(el);$('#prog').style.strokeDashoffset=C*(1-(el%1500)/1500)}
+function tickRun(){const r=S.run;if(!r)return;let txt;
+  if(r.end){const left=(r.end-Date.now())/1000;const tot=(r.end-r.start)/1000+(r.total||0)*60;txt=fmtClock(left);$('#prog').style.strokeDashoffset=C*(1-Math.max(0,left)/tot);if(left<=0){finishRun(false);return}}
+  else{const el=(Date.now()-r.start)/1000+(r.total||0)*60;txt=fmtClock(el);$('#prog').style.strokeDashoffset=C*(1-(el%1500)/1500)}
   $('#time').textContent=txt;const rb=$('#rbTime');if(rb)rb.textContent=txt+(r.end?' left':'')}
-document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.worksel!==undefined)switchWork(e.target.value)});
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.runnote!==undefined&&S.run){S.run.note=t.value;save();document.querySelectorAll('.runlbl,.rb-msg').forEach(x=>{x.innerHTML=label(S.run)})}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.runnote!==undefined){editOpen=false;renderRun()}});
 document.addEventListener('click',e=>{const t=e.target;
   if(t.closest('[data-runstop]'))finishRun(false);
-  else if(t.closest('[data-runmore]')){const k=justDone?justDone.key:'';startTimer(justDone&&!justDone.up?10:0,k)}
+  else if(t.closest('[data-runmore]')){const j=justDone||{};startTimer(j.up?0:10,{cls:j.cls,note:j.note,aid:j.aid})}
   else if(t.closest('[data-rundone]')){justDone=null;renderRun()}
-  const w=t.closest('[data-work]');if(w){const k=w.dataset.work;if(S.run&&workKey(S.run)===k)finishRun(false);else startTimer(0,k)}});
+  else if(t.closest('[data-editopen]')){editOpen=true;renderRun();const n=document.querySelector('[data-runnote]');if(n)n.focus()}
+  else if(t.closest('[data-editdone]')){editOpen=false;renderRun()}
+  const rc=t.closest('[data-runcls]');if(rc)switchCls(rc.dataset.runcls);
+  const pc=t.closest('[data-pickcls]');if(pc){pickCls=pc.dataset.pickcls;document.querySelectorAll('[data-pickcls]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.pickcls===pickCls)))}
+  const w=t.closest('[data-work]');if(w){const aid=w.dataset.work;if(S.run&&S.run.aid===aid)finishRun(false);else startTimer(0,fromAid(aid))}});
 addEventListener('hashchange',renderRun);
-function renderRunLite(){const r=S.run;if(!r)return;document.querySelectorAll('[data-worksel]').forEach(s=>{s.innerHTML=workOptions(workKey(r))})}
 const timeOn=aid=>(S.log||[]).filter(x=>x.aid&&x.aid===aid).reduce((n,x)=>n+x.m,0);
 let showAllLog=false;
 /* group Canvas class names (like "Chemistry I Honors - Conner") under the class names used here */
-function clsGroup(name){if(!name)return 'Other';const low=name.toLowerCase();
+function clsGroup(name){if(!name)return 'Other';if(CLASSES().includes(name))return name;const low=name.toLowerCase();
   const c=COURSES.find(c=>{const keys=c.name.toLowerCase().split(/\s+/).filter(w=>w.length>2&&!/^(honors|ap|[ivx]+)$/.test(w)).map(w=>w.slice(0,4));return keys.length&&keys.every(k=>low.includes(k))});
-  return c?c.name:name}
+  return c?c.name:'Other'}
+const entryCls=x=>clsGroup(x.cls);const entryNote=x=>x.note!==undefined?x.note:(x.label&&!/general work|^Other homework$/.test(x.label)?x.label:'');
 function renderTime(){const L=S.log||[];const t=iso(today());const wk=iso(addDays(today(),-((today().getDay()+6)%7)));
   const td=L.filter(x=>x.d===t).reduce((n,x)=>n+x.m,0),w=L.filter(x=>x.d>=wk);const wm=w.reduce((n,x)=>n+x.m,0);
-  const by={};w.forEach(x=>{const k=clsGroup(x.cls);by[k]=(by[k]||0)+x.m});const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]);const mx=rows.length?rows[0][1]:1;
+  const by={};w.forEach(x=>{const k=entryCls(x);by[k]=(by[k]||0)+x.m});const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]);const mx=rows.length?rows[0][1]:1;
   const days=[];for(let i=6;i>=0;i--){const d=iso(addDays(today(),-i));days.push([d,L.filter(x=>x.d===d).reduce((n,x)=>n+x.m,0)])}const dmx=Math.max(30,...days.map(x=>x[1]));
   const recent=L.slice().reverse().slice(0,showAllLog?200:8);
-  $('#timeCard').innerHTML=`<div class="panel"><h3>Homework time log</h3>
-    <p class="sub" style="margin-bottom:.8rem">Tap <b>Start working</b> on any assignment below, or start here. Pick what you’re working on, and the time is saved to it when you stop.</p>
-    <div class="row" style="margin-bottom:1rem"><label class="vh" for="logPick">What are you working on?</label><select id="logPick" class="worksel" style="max-width:24rem">${workOptions(S.run?workKey(S.run):((nextUp()||{}).id||''))}</select>
-      ${S.run?'<button class="btn small" data-runstop>Stop and save</button>':'<button class="btn small" id="logStart" type="button">Start working</button>'}</div>
+  const startArea=S.run?`<p class="t" style="margin-bottom:1rem">Timer running: ${label(S.run)} <button class="btn small" data-runstop style="margin-left:.5rem">Stop and save</button></p>`
+    :`<div class="sub" style="margin-bottom:.3rem">Which class?</div>${chipsHTML(defaultCls(),'data-pickcls')}
+      <div class="row" style="margin:.6rem 0 1rem"><input type="text" id="logNote" placeholder="What are you working on? (optional)" maxlength="80" aria-label="What are you working on?" style="flex:1;min-width:12rem;max-width:26rem"><button class="btn small" id="logStart" type="button">Start working</button></div>`;
+  $('#timeCard').innerHTML=`<div class="panel"><h3>Homework time log</h3>${startArea}
     ${L.length?`<div class="tgrid"><div><div class="tstats"><div><span class="big">${fmtMin(td)}</span><span class="sub">today</span></div><div><span class="big">${fmtMin(wm)}</span><span class="sub">this week</span></div></div>
     <div class="spark" aria-label="Minutes each of the last 7 days">${days.map(x=>`<div title="${dayName(x[0])}: ${x[1]} min"><i style="height:${Math.max(x[1]?8:2,Math.round(x[1]/dmx*100))}%"></i><span>${parse(x[0]).toLocaleDateString(undefined,{weekday:'narrow'})}</span></div>`).join('')}</div>
     ${rows.length?`<div class="sub" style="margin:.6rem 0 .3rem">This week by class</div>${rows.map(r=>`<div class="cbar"><span>${esc(r[0])}</span><b style="width:${Math.max(4,Math.round(r[1]/mx*100))}%"></b><em>${fmtMin(r[1])}</em></div>`).join('')}`:''}</div>
-    <div><div class="sub" style="margin-bottom:.3rem">Recent work</div><table class="logt"><tbody>${recent.map(x=>`<tr><td>${x.d===t?'Today':dayName(x.d)}</td><td>${esc(x.label)}${x.cls&&!x.label.startsWith(x.cls)?`<span class="sub"> – ${esc(x.cls)}</span>`:''}</td><td class="num">${fmtMin(x.m)}</td><td><button class="x" data-dellog="${x.id||''}" data-ix="${L.indexOf(x)}" aria-label="Delete this entry">×</button></td></tr>`).join('')}</tbody></table>
+    <div><div class="sub" style="margin-bottom:.3rem">Recent work</div><table class="logt"><tbody>${recent.map(x=>{const n=entryNote(x);return `<tr><td>${x.d===t?'Today':dayName(x.d)}</td><td>${esc(entryCls(x))}${n?`<span class="sub"> · ${esc(n)}</span>`:''}</td><td class="num">${fmtMin(x.m)}</td><td><button class="x" data-dellog="${x.id||''}" data-ix="${L.indexOf(x)}" aria-label="Delete this entry">×</button></td></tr>`}).join('')}</tbody></table>
     ${L.length>8?`<button class="icon" id="logMore" style="padding-left:0;color:var(--accent)">${showAllLog?'Show less':'Show all '+L.length}</button>`:''}</div></div>`
     :'<p class="sub">Nothing logged yet. Your time will show up here by day and by class.</p>'}
     <details style="border:0;background:none;margin:.6rem 0 0"><summary style="padding:.4rem 0;font-size:.95rem;color:var(--accent)">Forgot to start the timer? Add time</summary>
-      <div class="grid three" style="margin-top:.4rem"><div><label for="mWhat">What did you work on?</label><select id="mWhat">${workOptions((nextUp()||{}).id||'')}</select></div>
+      <div class="grid three" style="margin-top:.4rem"><div><label for="mCls">Class</label><select id="mCls">${CLASSES().map(c=>`<option ${c===defaultCls()?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
       <div><label for="mMin">Minutes</label><input type="text" inputmode="numeric" id="mMin" placeholder="30"></div>
       <div><label for="mDay">Day</label><input type="date" id="mDay" value="${t}"></div></div>
+      <label for="mNote" style="margin-top:.6rem">What did you work on? (optional)</label><input type="text" id="mNote" maxlength="80" placeholder="Chapter 17 reading">
       <button class="btn small" id="mAdd" type="button" style="margin-top:.6rem">Add time</button><span class="import-msg" id="mMsg" style="margin-left:.6rem"></span></details></div>`}
 document.addEventListener('click',e=>{const t=e.target;
-  if(t.id==='logStart'){startTimer(0,$('#logPick').value)}
+  if(t.id==='logStart'){startTimer(0,{cls:defaultCls(),note:$('#logNote').value})}
   if(t.id==='logMore'){showAllLog=!showAllLog;renderTime()}
-  if(t.dataset&&t.dataset.dellog!==undefined){const L=S.log||[];const k=L.findIndex(x=>t.dataset.dellog?x.id===t.dataset.dellog:false);const ix=k>=0?k:+t.dataset.ix;if(L[ix]){L.splice(ix,1);save();renderAll()}}
+  if(t.dataset&&t.dataset.dellog!==undefined){const L=S.log||[];const k=t.dataset.dellog?L.findIndex(x=>x.id===t.dataset.dellog):-1;const ix=k>=0?k:+t.dataset.ix;if(L[ix]){L.splice(ix,1);save();renderAll()}}
   if(t.id==='mAdd'){const m=parseInt($('#mMin').value,10);const msg=$('#mMsg');if(!(m>0&&m<=600)){msg.className='import-msg err';msg.textContent='Enter the number of minutes.';return}
-    const w=keyToWork($('#mWhat').value);logTime(m*60,w,$('#mDay').value||iso(today()));save();renderAll();const mm=$('#mMsg');if(mm){mm.className='import-msg ok';mm.textContent='Added '+fmtMin(m)+'.'}}});
+    logTime(m*60,{cls:$('#mCls').value,note:$('#mNote').value},$('#mDay').value||iso(today()));save();renderAll();const mm=$('#mMsg');if(mm){mm.className='import-msg ok';mm.textContent='Added '+fmtMin(m)+'.'}}});
 
 /* test plans */
 $('#planForm').addEventListener('submit',e=>{e.preventDefault();
@@ -865,7 +883,7 @@ function showStep(){const w=WHY.find(x=>x.k===st.why);if(!w)return;const a=S.ass
   $('#st3').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}
 $('#stSave').onclick=()=>{const a=S.assignments.find(x=>x.id===st.aid);const v=$('#stStep').value.trim();if(!a||!v)return;
   a.steps.unshift({t:v,done:false});save();renderAll();$('#stSave').hidden=true;$('#stMsg').textContent='Saved as the first step on '+a.title+'.';};
-$('#stGo').onclick=()=>{const v=$('#stStep').value.trim()||stTask();location.hash='today';setTimeout(()=>startTimer(5,st.aid||''),0);};
+$('#stGo').onclick=()=>{const v=$('#stStep').value.trim()||stTask();location.hash='today';setTimeout(()=>startTimer(5,st.aid?Object.assign(fromAid(st.aid),{note:v}):{cls:defaultCls(),note:v}),0);};
 function updateAI(){$('#stAI').hidden=!sampleFn}
 if(window.claude&&typeof window.claude.use==='function'){window.claude.use('sample').then(async s=>{sampleFn=s||null;updateAI();
   if(sampleFn){try{const l=await sampleFn.limits();canImg=!!(l&&l.images)}catch(e){canImg=false}$('#pImgWrap').hidden=!canImg;renderAll()}}).catch(()=>{})}
@@ -1120,7 +1138,7 @@ $('#feedSave').onclick=()=>{const u=feedFix($('#feedUrl').value);if(!/^https:\/\
 $('#feedClear').onclick=()=>{delete S.canvasUrl;save();$('#feedUrl').value='';$('#feedMsg').textContent='';renderImport()};
 function renderImport(){$('#feedClear').hidden=!S.canvasUrl;if(S.canvasUrl&&!$('#feedUrl').value)$('#feedUrl').value=S.canvasUrl;$('#lastImport').textContent=S.lastImport?'Last imported '+(S.lastImport===iso(today())?'today':dayName(S.lastImport)):''}
 
-function renderAll(){renderClasses();renderTime();if(typeof renderRun==='function'&&S.run){const a=document.activeElement;if(!(a&&a.dataset&&a.dataset.worksel!==undefined))renderRunLite()}renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
+function renderAll(){renderClasses();renderTime();renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
 clearPast();renderAll();route();pullFeed(false);
 if(S.run&&Date.now()-S.run.start>12*3600e3){S.run=null;save()}
 renderRun();
