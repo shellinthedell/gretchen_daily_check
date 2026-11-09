@@ -101,6 +101,11 @@ section[data-view].on{display:block}
 .focus .clschip,.runbar .clschip{background:transparent;color:inherit;border-color:color-mix(in srgb,var(--bg) 35%,transparent)}
 .focus .clschip[aria-pressed="true"],.runbar .clschip[aria-pressed="true"]{background:var(--bg);color:var(--ink);border-color:var(--bg)}
 .startpick{margin-bottom:1rem}
+.gs{border-left:6px solid var(--accent)}
+.gslist{list-style:none;margin:0;padding:0}.gslist li{display:flex;gap:.8rem;padding:.7rem 0;border-top:1px solid var(--line)}
+.gslist .gsn{flex:none;width:1.9rem;height:1.9rem;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.gslist li.d .gsn{background:var(--accent);color:var(--accent-ink)}.gslist li.d .t{text-decoration:line-through;color:var(--muted)}
+.gslist .btn{margin-top:.5rem}
 .when2{font-size:.8rem;opacity:.7;margin-top:.05rem}
 .early{display:inline-block;background:var(--sun);color:#1F2A44;font-weight:600;font-size:.9rem;border-radius:10px;padding:.35rem .75rem;margin-bottom:.8rem}
 .freenote{display:block;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c-free);border-radius:16px;padding:.85rem 1.1rem;margin-bottom:1.25rem}
@@ -305,6 +310,7 @@ details .try b{font-weight:600}
 <!-- TODAY -->
 <section data-view="today" aria-labelledby="h-today">
   <h2 id="h-today" class="sr-hide" style="position:absolute;left:-9999px">Today</h2>
+  <div id="getStarted"></div>
   <div class="focus" id="focus">
     <div id="focusBody"></div>
     <div class="timer" id="timer" aria-live="polite">
@@ -393,7 +399,7 @@ details .try b{font-weight:600}
     <p class="import-msg ok" id="addMsg" aria-live="polite"></p>
   </div>
   <div class="panel">
-    <h3>Add from an assignment sheet</h3>
+    <h3 id="sheetPanel">Add from an assignment sheet</h3>
     <p class="sub">Got a sheet with a few weeks of work? Upload it (PDF, Word, Excel, or CSV) and the site finds each assignment and its due date. You’ll check everything before it’s added.</p>
     <div class="grid two" style="margin-top:.75rem">
       <div><label for="bulkClass">Class (optional)</label><input type="text" id="bulkClass" placeholder="English 10" autocomplete="off"></div>
@@ -407,7 +413,7 @@ details .try b{font-weight:600}
     <div id="bulkReview"></div>
   </div>
   <div class="panel">
-    <h3>Import from Canvas</h3>
+    <h3 id="canvasPanel">Import from Canvas</h3>
     <p class="sub" style="margin-bottom:.25rem">Pull in every due date from all your classes at once. Re-import every Sunday to catch new assignments. Anything you’ve checked off or broken into steps stays the way you left it.</p>
     <details style="border:0;background:none;margin:0"><summary style="padding:.5rem 0;font-size:.95rem;color:var(--accent)">How to get your Canvas calendar file</summary>
       <ol class="howto">
@@ -587,7 +593,7 @@ function itemHTML(a,c){c=typeof c==='string'?c:'';const d=dueLabel(a.due);
     <button class="icon" data-act="del" data-id="${a.id}" aria-label="Delete ${esc(a.title)}">Delete</button>
   </div>`}
 function renderList(){const el=$('#list');const all=sorted();
-  if(!all.length){el.innerHTML='<div class="empty">Nothing here yet. Add the next thing you have due, even if it’s small.</div>';return}
+  if(!all.length){el.innerHTML='<div class="empty">Nothing here yet. The fastest way to fill this in is <a href="#canvasPanel" style="color:var(--accent)">Import from Canvas</a> above.</div>';return}
   const g={late:[],today:[],week:[],later:[],done:[]};
   all.forEach(a=>{if(a.done)g.done.push(a);else{const n=diff(a.due);(n<0?g.late:n===0?g.today:n<7?g.week:g.later).push(a)}});
   const names={late:'Catch up on these',today:'Due today',week:'This week',later:'Later',done:'Done'};
@@ -759,7 +765,7 @@ document.addEventListener('click',e=>{const t=e.target;
 addEventListener('hashchange',renderRun);
 const timeOn=aid=>(S.log||[]).filter(x=>x.aid&&x.aid===aid).reduce((n,x)=>n+x.m,0);
 let showAllLog=false;
-/* group Canvas class names (like "Chemistry I Honors - Conner") under the class names used here */
+/* group Canvas class names under the class names used here */
 function clsGroup(name){if(!name)return 'Other';if(CLASSES().includes(name))return name;const low=name.toLowerCase();
   const c=COURSES.find(c=>{const keys=c.name.toLowerCase().split(/\s+/).filter(w=>w.length>2&&!/^(honors|ap|[ivx]+)$/.test(w)).map(w=>w.slice(0,4));return keys.length&&keys.every(k=>low.includes(k))});
   return c?c.name:'Other'}
@@ -1225,7 +1231,26 @@ $('#feedSave').onclick=()=>{const u=feedFix($('#feedUrl').value);if(!/^https:\/\
 $('#feedClear').onclick=()=>{delete S.canvasUrl;save();$('#feedUrl').value='';$('#feedMsg').textContent='';renderImport()};
 function renderImport(){$('#feedClear').hidden=!S.canvasUrl;if(S.canvasUrl&&!$('#feedUrl').value)$('#feedUrl').value=S.canvasUrl;$('#lastImport').textContent=S.lastImport?'Last imported '+(S.lastImport===iso(today())?'today':dayName(S.lastImport)):''}
 
-function renderAll(){renderClasses();renderFree();renderFreeNote();renderTime();renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
+/* get started guide: shows on a new device until she has assignments */
+function renderStart(){const el=$('#getStarted');const A=S.assignments||[];
+  if(S.gsHide||(A.length>=3&&S.gsDone)){el.innerHTML='';return}
+  const c1=A.some(a=>a.src==='canvas'),c2=A.some(a=>a.src==='sheet');
+  if(c1&&A.length>=3&&!S.gsDone){S.gsDone=true;save()}
+  if(S.gsDone&&A.length>=3){el.innerHTML='';return}
+  const step=(done,n,title,body,btn)=>`<li class="${done?'d':''}"><span class="gsn" aria-hidden="true">${done?'\u2713':n}</span><div><div class="t">${title}</div><div class="sub">${body}</div>${done?'':btn}</div></li>`;
+  el.innerHTML=`<div class="panel gs"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Get started: bring in your assignments</h3><button class="icon" id="gsHide">Hide this</button></div>
+    <p class="sub" style="margin:.3rem 0 .6rem">Each device keeps its own list, so a new phone or laptop starts empty. This takes about a minute, and you only do it once.</p>
+    <ol class="gslist">
+      ${step(c1,1,'Bring in your Canvas assignments','In Canvas, click Calendar, then Calendar Feed (bottom right). Copy the link, paste it into a new browser tab to download the file, then choose that file here. Bookmark the link for next time.','<button class="btn small" data-gogo="canvas">Go to Canvas import</button>')}
+      ${step(c2,2,'Add teacher schedules that aren\u2019t on Canvas','Like the World History assignment sheet. Copy the whole table from Google Sheets and paste it in. Everything is added at once.','<button class="btn ghost small" data-gogo="sheet" style="color:var(--accent)">Go to assignment sheets</button>')}
+      ${step(false,3,'Write down anything else as you hear about it','Use the \u201cWrite it down before you forget\u201d box at the bottom of Today. One line is enough.','')}
+    </ol></div>`}
+document.addEventListener('click',e=>{const t=e.target;
+  if(t.id==='gsHide'){S.gsHide=true;save();renderStart()}
+  const g=t.closest('[data-gogo]');if(g){location.hash='assignments';setTimeout(()=>{const k=g.dataset.gogo;const h=$(k==='canvas'?'#canvasPanel':'#sheetPanel');
+    if(k==='canvas'){const d=h.parentElement.querySelector('details');if(d)d.open=true}else{const d=h.parentElement.querySelector('details');if(d)d.open=true}
+    h.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})},60)}});
+function renderAll(){renderStart();renderClasses();renderFree();renderFreeNote();renderTime();renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
 clearPast();renderAll();route();pullFeed(false);
 if(S.run&&Date.now()-S.run.start>12*3600e3){S.run=null;save()}
 renderRun();
