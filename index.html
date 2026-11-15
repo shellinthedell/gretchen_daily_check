@@ -14,7 +14,7 @@
 :root{
   --bg:#F2F5FB; --surface:#FFFFFF; --ink:#1F2A44; --muted:#5A6684; --line:#D9E0EE;
   --accent:#4F5FE8; --accent-ink:#FFFFFF; --accent-soft:#E4E7FD;
-  --c-today:#4F5FE8; --c-due:#9A6700; --c-start:#C2410C; --c-assignments:#4B5A7A; --c-tests:#7C4DDB; --c-strategies:#B0378A; --c-calm:#0E7C86; --c-free:#0369A1;
+  --c-today:#4F5FE8; --c-due:#9A6700; --c-start:#C2410C; --c-assignments:#4B5A7A; --c-tests:#7C4DDB; --c-strategies:#B0378A; --c-calm:#0E7C86; --c-free:#0369A1; --c-prog:#4D7C0F;
   --sun:#9A6700; --sun-soft:#FFF1CF; --later:#1E7A4F; --later-soft:#DDF2E5; --mint:#1E8A66; --mint-soft:#D9F3E9; --rose:#B4314F; --rose-soft:#FBE2E8;
   color-scheme: light;
   box-sizing:border-box;
@@ -23,7 +23,7 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --c-today:#8C97FF; --c-due:#F4C35A; --c-start:#FF9A6B; --c-assignments:#A8B4CF; --c-tests:#B79CFF; --c-strategies:#F28AD0; --c-calm:#5CCAD3; --c-free:#5EB8F0;
+    --c-today:#8C97FF; --c-due:#F4C35A; --c-start:#FF9A6B; --c-assignments:#A8B4CF; --c-tests:#B79CFF; --c-strategies:#F28AD0; --c-calm:#5CCAD3; --c-free:#5EB8F0; --c-prog:#A3E635;
     --later:#6FD69B; --later-soft:#183A2A;
     --bg:#12182A; --surface:#1B2338; --ink:#E7EBF7; --muted:#A1ABC6; --line:#2E3854;
     --accent:#8C97FF; --accent-ink:#12182A; --accent-soft:#2A3160;
@@ -32,7 +32,7 @@
   }
 }
 :root[data-theme="dark"]{
-  --c-today:#8C97FF; --c-due:#F4C35A; --c-start:#FF9A6B; --c-assignments:#A8B4CF; --c-tests:#B79CFF; --c-strategies:#F28AD0; --c-calm:#5CCAD3; --c-free:#5EB8F0;
+  --c-today:#8C97FF; --c-due:#F4C35A; --c-start:#FF9A6B; --c-assignments:#A8B4CF; --c-tests:#B79CFF; --c-strategies:#F28AD0; --c-calm:#5CCAD3; --c-free:#5EB8F0; --c-prog:#A3E635;
   --later:#6FD69B; --later-soft:#183A2A;
   --bg:#12182A; --surface:#1B2338; --ink:#E7EBF7; --muted:#A1ABC6; --line:#2E3854;
   --accent:#8C97FF; --accent-ink:#12182A; --accent-soft:#2A3160;
@@ -72,6 +72,7 @@ nav a[aria-current="page"]::before{background:var(--bg)}
 [href="#strategies"],section[data-view="strategies"]{--sec:var(--c-strategies)}
 [href="#calm"],section[data-view="calm"]{--sec:var(--c-calm)}
 [href="#free"],section[data-view="free"]{--sec:var(--c-free)}
+[href="#progress"],section[data-view="progress"]{--sec:var(--c-prog)}
 section[data-view] > h2::before{content:"";display:block;width:2.75rem;height:6px;border-radius:3px;background:var(--sec);margin-bottom:.7rem}
 
 main{padding:1.75rem 0 4rem}
@@ -101,6 +102,45 @@ section[data-view].on{display:block}
 .focus .clschip,.runbar .clschip{background:transparent;color:inherit;border-color:color-mix(in srgb,var(--bg) 35%,transparent)}
 .focus .clschip[aria-pressed="true"],.runbar .clschip[aria-pressed="true"]{background:var(--bg);color:var(--ink);border-color:var(--bg)}
 .startpick{margin-bottom:1rem}
+.bank .bankhead{display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:space-between;align-items:flex-end}
+.bankbal{font-size:2.6rem;font-weight:700;line-height:1.05;letter-spacing:-.02em}.bankbal span{font-size:1rem;font-weight:500;color:var(--muted)}
+.bankweek{text-align:right}.bankwk{font-size:1.6rem;font-weight:700;color:#2E9E44}
+.earn{list-style:none;margin:.8rem 0 0;padding:0}.earn li{display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-top:1px solid var(--line);font-size:.92rem}.earn b{color:#2E9E44}
+.interest{background:var(--sun-soft);border-radius:12px;padding:.7rem .9rem;margin:.9rem 0 .2rem;font-size:.93rem}.interest b{font-weight:700}
+.cashin{background:none;border:0;margin:.5rem 0 0}.cashin summary{padding:.4rem 0;color:var(--accent);font-weight:500}
+.howpts{margin:.3rem 0;padding-left:1.1rem;font-size:.92rem}.howpts li{margin-bottom:.25rem}
+.ptsline{display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;text-decoration:none;color:var(--ink);background:var(--sun-soft);border-radius:10px;padding:.55rem .8rem;margin-top:1rem;font-size:.92rem}.ptsline b{font-weight:700}
+.wkdays{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem}
+.wkd{display:flex;flex-direction:column;align-items:center;gap:.2rem;font-size:.8rem;color:var(--muted)}
+.wkd b{width:2.3rem;height:2.3rem;border-radius:10px;border:2px solid var(--line);display:grid;place-items:center;color:#fff;font-size:1rem}
+.wkd.on b{background:#2E9E44;border-color:#2E9E44}.wkd.today b{border-color:var(--accent)}.wkd.fut b{border-style:dashed}
+.minitrail{margin-top:1.1rem;padding-top:.9rem;border-top:1px solid var(--line)}.minitrail b{font-weight:600}
+.mtbar{height:.55rem;border-radius:4px;background:var(--line);overflow:hidden;margin:.4rem 0}.mtbar b{display:block;height:100%;background:var(--c-tests)}
+.trailsvg{width:100%;height:auto;display:block;margin-top:.4rem}
+.tkey,.glegend{display:flex;flex-wrap:wrap;gap:.3rem 1rem;font-size:.82rem;color:var(--muted);margin-top:.3rem}.tkey i,.glegend i{display:inline-block;width:.7rem;height:.7rem;border-radius:50%;margin-right:.35rem;vertical-align:-.05rem}.tkey i.hollow{border:1.5px solid var(--muted)}
+.waiting{background:var(--sun-soft);border-radius:12px;padding:.8rem .9rem;margin:.8rem 0}
+.wrow{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.4rem 0;border-top:1px solid color-mix(in srgb,var(--sun) 25%,transparent)}.wrow > div{flex:1;min-width:12rem}
+.wrow input{min-height:2.3rem;padding:.3rem .5rem}
+.ins{background:var(--accent-soft);border-radius:12px;padding:.7rem .9rem;margin:.8rem 0;font-size:.95rem}.ins b{font-weight:700}
+.gchart{width:100%;height:auto;display:block}
+.qadd{background:none;border:0;margin:.6rem 0 0}.qadd summary{padding:.4rem 0;color:var(--accent);font-weight:500}.qadd summary::after{content:''}
+.tsess .panel{margin-bottom:1.25rem}
+.goalrow{display:grid;gap:1.25rem;align-items:start;margin-bottom:1.25rem}@media (min-width:860px){.goalrow{grid-template-columns:1.5fr 1fr}}.goalrow .panel{margin:0}
+.gbar{height:.8rem;border-radius:6px;background:var(--line);overflow:hidden;margin:.6rem 0 .4rem}.gbar b{display:block;height:100%;background:linear-gradient(90deg,#58B947,#2E9E44);border-radius:6px;transition:width .6s ease}
+.glist{list-style:none;margin:0;padding:0}.glist li{display:flex;gap:.75rem;align-items:flex-start;padding:.6rem 0;border-top:1px solid var(--line)}
+.glist li.d .t{text-decoration:line-through;color:var(--muted)}.glist .gtx{flex:1}.glist .btn{margin-top:.4rem}
+.gauto{flex:none;width:1.6rem;height:1.6rem;border-radius:50%;border:2px dashed var(--muted);display:grid;place-items:center;color:var(--accent-ink);font-weight:700;font-size:.85rem;margin-top:.1rem}.gauto.on{background:var(--accent);border:2px solid var(--accent)}
+.bonus{display:inline-block;background:#F5C400;color:#1F2A44;font-size:.75rem;font-weight:700;border-radius:999px;padding:.05rem .5rem;margin-left:.3rem}
+.flowerp h3{text-align:center}.flowerwrap{display:flex;justify-content:center;color:var(--muted)}
+.flowerwrap .ghost{opacity:.45}.flowerwrap.pop svg{animation:fpop .8s ease}@keyframes fpop{30%{transform:scale(1.1) rotate(-3deg)}60%{transform:scale(.97) rotate(2deg)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.flowerwrap.pop svg{animation:none}.gbar b{transition:none}}
+.garden{margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--line)}.grow{display:flex;flex-wrap:wrap;gap:.2rem;align-items:flex-end;min-height:2.5rem}
+.bests{margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}.pb{display:flex;justify-content:space-between;font-size:.9rem;padding:.15rem 0}.pb b{font-weight:600}
+.focus{display:grid;grid-template-columns:minmax(0,1fr);gap:0 2rem}
+.toast{position:fixed;left:50%;top:1rem;transform:translate(-50%,-150%);z-index:30;background:var(--ink);color:var(--bg);padding:.7rem 1.1rem;border-radius:999px;font-weight:600;display:flex;gap:.6rem;align-items:center;box-shadow:0 8px 24px rgba(20,30,60,.25);transition:transform .35s ease;max-width:calc(100% - 2rem)}
+.toast.on{transform:translate(-50%,0)}.toast.big{font-size:1.1rem;padding:.9rem 1.4rem}
+.tdot{width:.8rem;height:.8rem;border-radius:50%;flex:none}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
 .gs{border-left:6px solid var(--accent)}
 .gslist{list-style:none;margin:0;padding:0}.gslist li{display:flex;gap:.8rem;padding:.7rem 0;border-top:1px solid var(--line)}
 .gslist .gsn{flex:none;width:1.9rem;height:1.9rem;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:600}
@@ -299,6 +339,7 @@ details .try b{font-weight:600}
       <a href="#assignments">Assignments</a>
       <a href="#free">Free period</a>
       <a href="#tests">Test plans</a>
+      <a href="#progress">My progress</a>
       <a href="#strategies">Strategies</a>
       <a href="#calm">Calm down</a>
     </nav>
@@ -325,18 +366,15 @@ details .try b{font-weight:600}
 
 
   <div id="freeNote"></div>
-  <div class="today-grid"><div id="dueSoon"></div>
-  <div id="todaySessions"></div></div>
-
-  <div class="panel">
-    <h3>Write it down before you forget</h3>
-    <form id="quickAdd" class="grid three" autocomplete="off">
+  <div class="goalrow"><div><div id="goalsCard"></div>
+    <details class="qadd" id="qaddBox"><summary>+ Add something</summary>
+    <form id="quickAdd" class="grid three" autocomplete="off" style="margin-top:.6rem">
       <div><label for="qaTitle">What’s due?</label><input id="qaTitle" type="text" placeholder="Bio worksheet, ch. 4" required></div>
       <div><label for="qaClass">Class</label><input id="qaClass" type="text" placeholder="Biology"></div>
       <div><label for="qaDue">Due</label><input id="qaDue" type="date" required></div>
       <div><button class="btn" type="submit">Add assignment</button></div>
-    </form>
-  </div>
+    </form></details></div>
+    <div id="weekCard"></div></div>
 </section>
 
 <!-- DUE BY TOMORROW -->
@@ -346,6 +384,7 @@ details .try b{font-weight:600}
   <div class="legend" aria-label="Color key"><span><i style="background:var(--rose)"></i>Overdue</span><span><i style="background:var(--sun)"></i>Due today or tomorrow</span><span><i style="background:var(--later)"></i>Later</span></div>
   <div id="dueNudge"></div>
   <div id="dueList"></div>
+  <div id="dueSoon" style="margin-top:1.5rem"></div>
 </section>
 
 <!-- HELP ME START -->
@@ -458,6 +497,7 @@ details .try b{font-weight:600}
       <div style="align-self:end"><button class="btn" type="submit">Make my plan</button></div>
     </form>
   </div>
+  <div id="todaySessions" class="tsess"></div>
   <div id="plans"></div>
 </section>
 
@@ -466,6 +506,15 @@ details .try b{font-weight:600}
   <h2 id="h-free">Free Period To-Do</h2>
   <p class="intro">Free periods disappear fast when you decide what to do once you’re there. Pick 2 or 3 things ahead of time, and the time is yours to use well.</p>
   <div id="freeBody"></div>
+</section>
+
+<!-- MY PROGRESS -->
+<section data-view="progress" aria-labelledby="h-prog">
+  <h2 id="h-prog">My progress</h2>
+  <p class="intro">This page is only about you: how far you’ve come, what’s working, and where you’re headed.</p>
+  <div id="bankCard"></div>
+  <div id="trailCard"></div>
+  <div class="goalrow"><div id="gradesCard"></div><div id="bestsCard"></div></div>
 </section>
 
 <!-- STRATEGIES -->
@@ -510,6 +559,7 @@ details .try b{font-weight:600}
 </section>
 
 <div id="runBar" class="runbar" hidden aria-live="polite"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <p class="private">Everything you type stays in this browser on this device. The only exceptions are “Break it into steps” and photo uploads, which send that task name or photo to Claude.</p>
 </main>
 
@@ -541,7 +591,7 @@ function dueLabel(s){const n=diff(s);
 $('#pDate').value=iso(addDays(today(),5));
 
 /* routing */
-const views=['today','due','start','assignments','free','tests','strategies','calm'];
+const views=['today','due','start','assignments','free','tests','progress','strategies','calm'];
 function route(){let v=location.hash.slice(1);if(!views.includes(v))v='today';
   document.querySelectorAll('section[data-view]').forEach(s=>s.classList.toggle('on',s.dataset.view===v));
   document.documentElement.style.setProperty('--secnow','var(--c-'+v+')');
@@ -600,10 +650,10 @@ function renderList(){const el=$('#list');const all=sorted();
   el.innerHTML=Object.keys(g).filter(k=>g[k].length).map(k=>`<h3 class="group">${names[k]}</h3>`+g[k].map(itemHTML).join('')).join('');}
 document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.act)return;
   const a=S.assignments.find(x=>x.id===t.dataset.id);
-  if(t.dataset.act==='done'&&a){a.done=t.checked;save();renderAll()}
+  if(t.dataset.act==='done'&&a){a.done=t.checked;a.doneOn=t.checked?iso(today()):null;save();renderAll()}
   if(t.dataset.act==='step'&&a){a.steps[+t.dataset.i].done=t.checked;save();renderAll()}
   if(t.dataset.act==='reqcheck'&&a&&a.reqs){a.reqs[+t.dataset.i].done=t.checked;save();renderAll()}
-  if(t.dataset.act==='session'){const p=S.plans.find(x=>x.id===t.dataset.id);if(p){p.days[+t.dataset.i].done=t.checked;save();renderAll()}}
+  if(t.dataset.act==='session'){const p=S.plans.find(x=>x.id===t.dataset.id);if(p){const dd=p.days[+t.dataset.i];dd.done=t.checked;dd.doneOn=t.checked?iso(today()):null;save();renderAll()}}
 });
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.tagName==='INPUT')return;
   if(t.dataset.act==='del'){S.assignments=S.assignments.filter(x=>x.id!==t.dataset.id);save();renderAll()}
@@ -688,6 +738,211 @@ function renderFreeNote(){const f=nextFree();const el=$('#freeNote');if(!f||f.i>
 function earlyNote(){const d=today().getDay();if(d===2)return '<div class="early">Tomorrow: Chemistry starts at 7:40 am (zero period). Get to school early.</div>';
   if(d===3&&nowMin()<toMin('7:40'))return '<div class="early">Today: Chemistry at 7:40 am. Head out early.</div>';return ''}
 
+/* ---------- daily goals, weekly goal, trail, grades ---------- */
+const MIDTERMS=[['mid-apwh','AP World History II midterm','AP World History II','2026-12-11'],['mid-alg','Algebra II midterm','Algebra II','2026-12-14'],['mid-eng','English midterm','English','2026-12-15'],['mid-chem','Honors Chemistry midterm','Honors Chemistry','2026-12-16'],['mid-span','Spanish III midterm','Spanish III','2026-12-17']];
+function seedMidterms(){S.seeded=S.seeded||[];let ch=false;MIDTERMS.forEach(([id,t,c,d])=>{if(S.seeded.includes(id))return;S.seeded.push(id);ch=true;
+  if(!S.assignments.some(a=>a.id===id))S.assignments.push({id,title:t,cls:c,due:d,type:'test',size:'l',src:'midterm',done:false,steps:[]})});if(ch)save()}
+/* midterm review schedule: points per subject per day */
+const MIDP={wk3:5,wk2:10,wk1:15,last:20,guide:20,A:100,B:50};
+function midPhase(dd){if(dd>=15&&dd<=21)return {min:15,label:'15–20 min',pts:MIDP.wk3,opt:true,name:'3 weeks out'};if(dd>=8&&dd<=14)return {min:20,label:'20–30 min',pts:MIDP.wk2,opt:true,name:'2 weeks out'};
+  if(dd>=4&&dd<=7)return {min:30,label:'30–45 min',pts:MIDP.wk1,opt:false,name:'1 week out'};if(dd>=1&&dd<=3)return {min:45,label:'45+ min',pts:MIDP.last,opt:false,name:'final days'};return null}
+const isMid=a=>a&&(a.src==='midterm'||/midterm|final exam/i.test(a.title||''));
+function reviewDone(a,D){const ph=midPhase(Math.round((parse(a.due)-parse(D))/864e5));if(!ph)return null;const gd=(S.gdone&&S.gdone[D])||[];return {ph,done:minutesFor(clsGroup(a.cls),D)>=ph.min||gd.includes('study:'+a.id)}}
+function nextSchool(D){let d=addDays(parse(D),1);while(d.getDay()===0||d.getDay()===6)d=addDays(d,1);return iso(d)}
+function minutesFor(cls,D){let m=(S.log||[]).filter(x=>x.d===D&&entryCls(x)===cls).reduce((n,x)=>n+x.m,0);
+  if(S.run&&D===iso(today())&&clsGroup(S.run.cls)===cls){let el=(Date.now()-S.run.start)/1000;if(S.run.end)el=Math.min(el,(S.run.end-S.run.start)/1000);m+=Math.floor(el/60)}return m}
+const shortDay=D=>parse(D).toLocaleDateString(undefined,{weekday:'long'});
+function goalsFor(D){const out=[];const dow=parse(D).getDay();const gd=(S.gdone&&S.gdone[D])||[];const isToday=D===iso(today());
+  if(dow>=1&&dow<=5){const n=isToday?checkedToday().length:((S.dayLog&&S.dayLog[D]&&S.dayLog[D].pages)||0);
+    out.push({id:'pages',kind:'pages',label:'Check the Canvas page for each class',sub:n+' of '+COURSES.length+' checked (in the box above)',done:n>=COURSES.length})}
+  if(dow===1)out.push({id:'planner',kind:'manual',label:'Update your planner',sub:'Write this week’s due dates and tests in it.',done:gd.includes('planner')});
+  const ns=nextSchool(D);
+  sorted().filter(a=>a.type!=='test'&&a.type!=='quiz'&&((!a.done&&a.due<=ns)||(a.done&&a.doneOn===D))).forEach(a=>{
+    out.push({id:'due:'+a.id,kind:'due',aid:a.id,label:'Finish '+a.title,sub:(a.cls?clsGroup(a.cls)+' · ':'')+dueLabel(a.due).t,done:!!a.done})});
+  S.assignments.filter(a=>a.type==='test'&&isMid(a)).forEach(a=>{const X=a.due;const dd=Math.round((parse(X)-parse(D))/864e5);if(dd<1)return;const cls=clsGroup(a.cls);
+    const ph=midPhase(dd);if(ph){const m=minutesFor(cls,D);const man=gd.includes('study:'+a.id);
+      out.push({id:'study:'+a.id,kind:'study',aid:a.id,cls,start:ph.min,label:'Review for '+a.title+' ('+ph.label+')',sub:(m>=ph.min?'Done. +'+ph.pts+' points.':m+' of '+ph.min+' minutes. Earns '+ph.pts+' points.')+' Midterm in '+dd+' day'+(dd===1?'':'s')+'.',done:m>=ph.min||man,optional:ph.opt})}
+    const due3=iso(addDays(parse(X),-3));
+    if(a.guideOn){if(a.guideOn===D)out.push({id:'guide:'+a.id,kind:'guide',aid:a.id,label:'Finish the study guide for '+a.title,sub:a.guideOn<=due3?'Done on time. +'+MIDP.guide+' points.':'Done. Finishing 3–4 days before earns points next time.',done:true,bonus:a.guideOn<=due3})}
+    else if(dd<=10&&D<=due3)out.push({id:'guide:'+a.id,kind:'guide',aid:a.id,label:'Finish the study guide for '+a.title,sub:(D===due3?'Due today':'Due by '+shortDay(due3))+' (3–4 days before the midterm). Earns '+MIDP.guide+' points.',done:false,optional:D<due3})});
+  S.assignments.filter(a=>a.type==='test'&&!isMid(a)).forEach(a=>{const X=a.due;const dd=Math.round((parse(X)-parse(D))/864e5);if(dd<1)return;const cls=clsGroup(a.cls);
+    if(dd<=4){const m=minutesFor(cls,D);const man=gd.includes('study:'+a.id);
+      out.push({id:'study:'+a.id,kind:'study',aid:a.id,cls,label:'Study for '+a.title+' (30–40 min)',sub:(m>=30?'':m+' of 30 minutes so far. ')+(dd===1?'Test is tomorrow.':'Test in '+dd+' days.'),done:m>=30||man,min:m})}
+    const due2=iso(addDays(parse(X),-2)),due3=iso(addDays(parse(X),-3));
+    if(a.guideOn){if(a.guideOn===D)out.push({id:'guide:'+a.id,kind:'guide',aid:a.id,label:'Finish the study guide for '+a.title,sub:a.guideOn<=due3?'Done early. Bonus star earned!':'Done on time.',done:true,bonus:a.guideOn<=due3})}
+    else if(dd<=7&&D<=due2)out.push({id:'guide:'+a.id,kind:'guide',aid:a.id,label:'Finish the study guide for '+a.title,sub:(D===due2?'Due today.':'Due by '+shortDay(due2)+'.')+(D<=due3?' Finish by '+shortDay(due3)+' for a bonus star!':''),done:false,optional:D<due2})});
+  return out}
+function renderGoals(){const D=iso(today());const ALL=goalsFor(D);const G=ALL.filter(g=>!g.optional);const EX=ALL.filter(g=>g.optional);const done=G.filter(g=>g.done).length,total=G.length,bonus=G.filter(g=>g.bonus).length;
+  S.dayLog=S.dayLog||{};const prev=S.dayLog[D]||{done:0,total:0,bonus:0};const full=total>0&&done===total;
+  S.dayLog[D]={done,total,bonus,pages:checkedToday().length,full};const ks=Object.keys(S.dayLog).sort();while(ks.length>200){delete S.dayLog[ks.shift()]}
+  const pct=total?Math.round(done/total*100):0;
+  $('#goalsCard').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">Daily goal</h3><span class="sub">${total?done+' of '+total+' done':''}</span></div>
+    ${total?`<p class="sub" style="margin:.2rem 0 0">${full?'Daily goal met. Nice work today.':'Finish everything on this list to meet today’s goal.'}</p><div class="gbar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}" aria-label="Goals done today"><b style="width:${pct}%"></b></div>
+    <ul class="glist">${G.map(g=>{let box;
+      if(g.kind==='pages')box=`<span class="gauto ${g.done?'on':''}" aria-hidden="true">${g.done?'✓':''}</span>`;
+      else if(g.kind==='due')box=`<input type="checkbox" class="check" data-act="done" data-id="${g.aid}" ${g.done?'checked':''} aria-label="Done: ${esc(g.label)}">`;
+      else if(g.kind==='guide')box=`<input type="checkbox" class="check" data-guide="${g.aid}" ${g.done?'checked':''} aria-label="Done: ${esc(g.label)}">`;
+      else box=`<input type="checkbox" class="check" data-goal="${g.id}" ${g.done?'checked':''} aria-label="Done: ${esc(g.label)}">`;
+      const act=g.kind==='study'&&!g.done?`<button class="btn small" data-studygo="${g.aid}" data-min="${g.start||30}">Start ${g.start||30} min</button>`:'';
+      return `<li class="${g.done?'d':''}">${box}<div class="gtx"><div class="t">${esc(g.label)}${g.bonus?' <span class="bonus">\u2605 bonus</span>':''}</div><div class="sub">${esc(g.sub)}</div>${act}</div></li>`}).join('')}</ul>`
+    :'<p class="sub">No goals today. Enjoy your day off!</p>'}
+    ${EX.length?`<div class="extra"><div class="sub" style="margin:.8rem 0 .1rem"><b>Get ahead (optional)</b> \u00b7 earns points, not part of today\u2019s goal</div><ul class="glist">${EX.map(g=>`<li class="${g.done?'d':''}"><input type="checkbox" class="check" ${g.done?'checked':''} ${g.kind==='guide'?`data-guide="${g.aid}"`:`data-goal="${g.id}"`} aria-label="Done: ${esc(g.label)}"><div class="gtx"><div class="t">${esc(g.label)}</div><div class="sub">${esc(g.sub)}</div>${g.kind==='study'&&!g.done?`<button class="btn ghost small" data-studygo="${g.aid}" data-min="${g.start}" style="color:var(--accent);margin-top:.4rem">Start ${g.start} min</button>`:''}</div></li>`).join('')}</ul></div>`:''}</div>`;
+  renderWeek();renderProgress();
+  if(prev.done<done&&prev.total){if(full)celebrate('Daily goal met! Every goal done today.','#2E9E44',true);else celebrate('Nice! '+done+' of '+total+' done today.','#58B947')}
+  save()}
+/* ---------- weekly goal ---------- */
+const weekGoal=()=>(S.weekGoal||4);
+function weekDays(){const mon=addDays(today(),-((today().getDay()+6)%7));return [0,1,2,3,4].map(i=>iso(addDays(mon,i)))}
+function renderWeek(){const days=weekDays();const DL=S.dayLog||{};const t=iso(today());const met=days.filter(d=>DL[d]&&DL[d].full).length;const g=weekGoal();const hit=met>=g;
+  const tr=trailSteps();const nextFlag=tr.steps.find(s=>s.kind==='test'&&!s.done);
+  $('#weekCard').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">Weekly goal</h3><span class="sub">${met} of ${g} days</span></div>
+    <p class="sub" style="margin:.2rem 0 .7rem">${hit?'Weekly goal met!':'Meet your daily goal on '+g+' school days this week.'}</p>
+    <div class="wkdays">${days.map(d=>{const on=DL[d]&&DL[d].full;const fut=d>t;return `<div class="wkd ${on?'on':''} ${fut?'fut':''} ${d===t?'today':''}" title="${dayName(d)}"><b>${on?'✓':''}</b><span>${parse(d).toLocaleDateString(undefined,{weekday:'short'})}</span></div>`}).join('')}</div>
+    ${(()=>{settleBank();const wk=weekEarn(mondayOf(t)).total;const prevPts=S.wkPts;S.wkPts={w:mondayOf(t),p:wk};if(prevPts&&prevPts.w===mondayOf(t)&&wk>prevPts.p)setTimeout(()=>celebrate('+'+(wk-prevPts.p)+' points! '+wk+' this week.','#F5C400'),3200);
+      return `<a href="#progress" class="ptsline"><span><b>+${wk}</b> points this week</span><span><b>${S.bank.bal}</b> in the bank</span></a>`})()}
+    <div class="minitrail"><div class="row" style="justify-content:space-between;align-items:baseline"><b>Trail to midterms</b><span class="sub">${tr.done} of ${tr.steps.length} steps</span></div>
+      <div class="mtbar"><b style="width:${tr.steps.length?Math.round(tr.done/tr.steps.length*100):0}%"></b></div>
+      <div class="sub">${nextFlag?'Next stop: '+esc(nextFlag.label)+', '+parse(nextFlag.date).toLocaleDateString(undefined,{month:'short',day:'numeric'})+'.':'You made it through midterms!'} <a href="#progress" style="color:var(--accent)">See your trail</a></div></div></div>`}
+/* ---------- trail to midterms ---------- */
+const TRAIL_END='2026-12-17';
+function trailSteps(){const t=iso(today());if(!S.trailStart)S.trailStart=t;const DL=S.dayLog||{};const steps=[];const firstMid=MIDTERMS.map(m=>m[3]).sort()[0];
+  const prepStart=iso(addDays(parse(firstMid),-7));
+  for(let d=parse(S.trailStart);iso(d)<prepStart;d=addDays(d,1)){const k=iso(d);const dw=d.getDay();if(dw===0||dw===6)continue;const full=!!(DL[k]&&DL[k].full);
+    if(k<t&&!full)continue; /* missed days simply drop off; nothing is taken away */
+    steps.push({date:k,kind:'day',label:'Daily goal',done:full})}
+  MIDTERMS.forEach(([id,title,cls,X])=>{const a=S.assignments.find(x=>x.id===id);if(!a)return;
+    for(let i=21;i>=1;i--){const d=iso(addDays(parse(X),-i));const r=reviewDone(a,d);if(!r)continue;if(r.ph.opt&&!r.done)continue;if(d<t&&!r.done)continue;steps.push({date:d,kind:'study',label:'Review for '+title+' ('+r.ph.name+')',done:r.done})}
+    const g3=iso(addDays(parse(X),-3));steps.push({date:a.guideOn||g3,kind:'guide',label:title.replace(' midterm','')+' study guide',done:!!a.guideOn,early:!!a.guideOn&&a.guideOn<=g3});
+    steps.push({date:X,kind:'test',label:title,done:X<t})});
+  steps.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.kind==='test')-(b.kind==='test'));
+  return {steps,done:steps.filter(s=>s.done).length}}
+function starPath(cx,cy,r){let p='';for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5;const rr=i%2?r*.45:r;p+=(i?'L':'M')+(cx+Math.cos(a)*rr).toFixed(1)+' '+(cy+Math.sin(a)*rr).toFixed(1)}return p+'Z'}
+function trailSVG(tr){const W=640,H=250;const way=[[40,225],[300,205],[120,170],[420,150],[200,112],[500,92],[330,58],[590,32]];
+  const segs=[];let L=0;for(let i=1;i<way.length;i++){const l=Math.hypot(way[i][0]-way[i-1][0],way[i][1]-way[i-1][1]);segs.push(l);L+=l}
+  const at=f=>{let d=f*L;for(let i=0;i<segs.length;i++){if(d<=segs[i]||i===segs.length-1){const r=Math.min(1,d/segs[i]);return [way[i][0]+(way[i+1][0]-way[i][0])*r,way[i][1]+(way[i+1][1]-way[i][1])*r]}d-=segs[i]}};
+  const n=tr.steps.length;let you=at(0);let dots='',flags='',fi=0;
+  tr.steps.forEach((s,i)=>{const [x,y]=at(n>1?(i+1)/n:1);if(s.done)you=[x,y];
+    if(s.kind==='test'){fi++;const up=fi%2===1;const nm=s.label.replace(' midterm','').replace('AP World History II','AP World').replace('Honors Chemistry','Chem').replace('Spanish III','Spanish').replace('Algebra II','Algebra');
+      flags+=`<g><line x1="${x}" y1="${y}" x2="${x}" y2="${up?y-22:y+22}" stroke="var(--ink)" stroke-width="1.5"/><path d="M${x} ${up?y-22:y+12} l13 5 l-13 5z" fill="${s.done?'#2E9E44':'var(--c-tests)'}"/><text x="${x}" y="${up?y-27:y+36}" text-anchor="middle" font-size="10.5" fill="var(--ink)" font-weight="600">${esc(nm)} ${parse(s.date).getMonth()+1}/${parse(s.date).getDate()}</text></g>`}
+    else if(s.kind==='guide'&&s.early)dots+=`<path d="${starPath(x,y,8)}" fill="#F5C400" stroke="#B88A00" stroke-width=".8"><title>${esc(s.label)}: done early</title></path>`;
+    else dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${s.kind==='guide'?5.5:4}" fill="${s.done?(s.kind==='guide'?'#F5C400':'#2E9E44'):'var(--surface)'}" stroke="${s.done?'none':'var(--muted)'}" stroke-width="1.3"><title>${esc(s.label)} · ${dayName(s.date)}</title></circle>`});
+  return `<svg viewBox="0 -28 ${W} ${H+28}" class="trailsvg" role="img" aria-label="Trail to midterms: ${tr.done} of ${n} steps done">
+    <path d="M0 ${H} L150 120 L250 160 L420 40 L520 90 L600 20 L${W} 60 L${W} ${H} Z" fill="var(--later-soft)" opacity=".8"/>
+    <path d="M${way.map(p=>p.join(' ')).join(' L')}" fill="none" stroke="var(--line)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M${way.map(p=>p.join(' ')).join(' L')}" fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="3 5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}${flags}
+    <g><circle cx="${you[0]}" cy="${you[1]}" r="11" fill="var(--accent)" stroke="var(--surface)" stroke-width="3"/><text x="${you[0]}" y="${you[1]+3.5}" text-anchor="middle" font-size="9" font-weight="700" fill="var(--accent-ink)">You</text></g>
+    <text x="40" y="244" font-size="11" fill="var(--muted)">Start</text></svg>`}
+/* ---------- time and grades ---------- */
+const GRADED=['test','quiz','project','paper'];
+function timeForGrade(a){const cls=clsGroup(a.cls);const win=(a.type==='project'||a.type==='paper')?14:7;const from=iso(addDays(parse(a.due),-win));
+  return (S.log||[]).filter(x=>x.aid===a.id||(entryCls(x)===cls&&x.d>=from&&x.d<=a.due&&x.aid!==a.id)).reduce((n,x)=>n+x.m,0)}
+const gradeOf=v=>{v=String(v).trim().toUpperCase();const L={'A+':98,'A':95,'A-':91,'B+':88,'B':85,'B-':81,'C+':78,'C':75,'C-':71,'D+':68,'D':65,'D-':61,'F':50};if(L[v]!==undefined)return L[v];const n=parseFloat(v);return n>=0&&n<=110?n:null};
+function renderGrades(){const t=iso(today());const A=S.assignments||[];
+  const waiting=A.filter(a=>GRADED.includes(a.type)&&a.due<t&&a.grade==null&&!a.gradeSkip&&a.due>=iso(addDays(today(),-45))).sort((a,b)=>a.due<b.due?1:-1);
+  const graded=A.filter(a=>a.grade!=null).map(a=>({a,m:timeForGrade(a),g:a.grade})).sort((x,y)=>x.a.due<y.a.due?1:-1);
+  let insight='';
+  const pts=graded.filter(x=>x.m>0);
+  if(pts.length>=3){const ms=pts.map(x=>x.m).sort((a,b)=>a-b);const med=ms[Math.floor(ms.length/2)];const hi=pts.filter(x=>x.m>=med),lo=pts.filter(x=>x.m<med);
+    const avg=L=>Math.round(L.reduce((n,x)=>n+x.g,0)/L.length);
+    if(lo.length&&hi.length){const ah=avg(hi),al=avg(lo);insight=ah>al?`When you put in ${fmtMin(med)} or more, your average was <b>${ah}%</b>. With less time, it was <b>${al}%</b>. Your effort shows up in your grades.`
+      :`So far, more time hasn’t meant higher grades. That happens. It may help to study differently, like quizzing yourself instead of rereading, or to ask your teacher what to focus on.`}}
+  else insight=`Enter grades as you get them back. After three, you’ll start to see how your time connects to your results.`;
+  const mx=Math.max(60,...pts.map(x=>x.m));const CL=COURSES.map(c=>c.name).concat(['Other']);const COL=['#E3000B','#0B78D1','#9B5DE5','#FF8A00','#00A99D','#7A7A7A'];
+  const colOf=c=>COL[Math.max(0,CL.indexOf(clsGroup(c)))];
+  const chart=pts.length?`<svg viewBox="0 0 400 210" class="gchart" role="img" aria-label="Time spent compared with grades">
+    ${[60,70,80,90,100].map(g=>{const y=190-(g-50)/50*170;return `<line x1="40" x2="390" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="34" y="${y+4}" text-anchor="end" font-size="10" fill="var(--muted)">${g}%</text>`}).join('')}
+    <text x="215" y="208" text-anchor="middle" font-size="10" fill="var(--muted)">Time you put in →</text>
+    ${pts.map(x=>{const cx=40+x.m/mx*340,cy=190-(Math.max(50,Math.min(100,x.g))-50)/50*170;return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="6" fill="${colOf(x.a.cls)}" fill-opacity=".85" stroke="var(--surface)" stroke-width="1.5"><title>${esc(x.a.title)}: ${fmtMin(x.m)}, ${x.g}%</title></circle>`}).join('')}</svg>
+    <div class="glegend">${CL.filter(c=>pts.some(x=>clsGroup(x.a.cls)===c)).map(c=>`<span><i style="background:${colOf(c)}"></i>${esc(c)}</span>`).join('')}</div>`:'';
+  $('#gradesCard').innerHTML=`<div class="panel"><h3>Your time and your grades</h3>
+    <p class="sub">This compares you only to you. Nobody else’s grades or time are here, and your own progress is what counts.</p>
+    ${waiting.length?`<div class="waiting"><div class="t" style="margin-bottom:.3rem">Got a grade back?</div>${waiting.map(a=>`<div class="wrow"><div><div>${esc(a.title)}</div><div class="sub">${esc(clsGroup(a.cls))} · ${dayName(a.due)} · you put in ${fmtMin(timeForGrade(a))||'0 min'}</div></div>
+      <input type="text" inputmode="decimal" placeholder="% or letter" data-gradein="${a.id}" aria-label="Grade for ${esc(a.title)}" style="width:7.5rem"><button class="btn small" data-gradesave="${a.id}">Save</button><button class="icon" data-gradeskip="${a.id}">Skip</button></div>`).join('')}</div>`:''}
+    <div class="ins">${insight}</div>${chart}
+    ${graded.length?`<table class="logt" style="margin-top:.8rem"><tbody>${graded.slice(0,12).map(x=>`<tr><td>${dayName(x.a.due)}</td><td>${esc(x.a.title)}<span class="sub"> · ${esc(clsGroup(x.a.cls))}</span></td><td class="num">${fmtMin(x.m)||'0 min'}</td><td class="num"><b>${x.g}%</b></td><td><button class="x" data-gradeclear="${x.a.id}" aria-label="Change grade for ${esc(x.a.title)}">✎</button></td></tr>`).join('')}</tbody></table>`:''}
+    <p class="hint">Time counts what you logged for that class in the ${'week'} before a test or quiz, or two weeks before a project or paper.</p></div>`}
+document.addEventListener('click',e=>{const t=e.target;
+  const sv=t.closest('[data-gradesave]');if(sv){const id=sv.dataset.gradesave;const inp=document.querySelector(`[data-gradein="${id}"]`);const g=gradeOf(inp?inp.value:'');if(g===null){if(inp){inp.focus();inp.style.borderColor='var(--rose)'}return}
+    const a=S.assignments.find(x=>x.id===id);if(a){a.grade=Math.round(g);a.gradeOn=iso(today());save();renderProgress();renderWeek();if(isMid(a)&&a.grade>=80)celebrate((a.grade>=90?'An A on your midterm! +'+MIDP.A:'A B on your midterm! +'+MIDP.B)+' points.','#F5C400',true);else if(!isMid(a)&&a.grade>=90)celebrate('An A! +'+(a.type==='test'?PT().testA:a.type==='quiz'?PT().quizA:PT().projA)+' points.','#F5C400',true)}}
+  const sk=t.closest('[data-gradeskip]');if(sk){const a=S.assignments.find(x=>x.id===sk.dataset.gradeskip);if(a){a.gradeSkip=true;save();renderProgress()}}
+  const gc=t.closest('[data-gradeclear]');if(gc){const a=S.assignments.find(x=>x.id===gc.dataset.gradeclear);if(a){a.grade=null;a.gradeSkip=false;save();renderProgress()}}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.gradein){const b=document.querySelector(`[data-gradesave="${e.target.dataset.gradein}"]`);if(b)b.click()}});
+/* ---------- point bank ---------- */
+const PTS_DEFAULT={day:10,week:25,star:5,testA:25,quizA:10,projA:15,rate:5};
+const PT=()=>Object.assign({},PTS_DEFAULT,S.pts||{});
+const mondayOf=d=>{d=typeof d==='string'?parse(d):d;return iso(addDays(d,-((d.getDay()+6)%7)))};
+const shortDate=D=>parse(D).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+function weekEarn(mon){const P=PT();const DL=S.dayLog||{};const end=iso(addDays(parse(mon),6));const items=[];
+  const days=[0,1,2,3,4,5,6].map(i=>iso(addDays(parse(mon),i)));const full=days.filter(d=>DL[d]&&DL[d].full);
+  if(full.length)items.push({why:'Daily goal met '+full.length+' day'+(full.length===1?'':'s'),pts:full.length*P.day});
+  const school=days.slice(0,5).filter(d=>DL[d]&&DL[d].full).length;if(school>=weekGoal())items.push({why:'Weekly goal met',pts:P.week});
+  (S.assignments||[]).forEach(a=>{const mid=isMid(a);
+    if(a.guideOn&&a.guideOn>=mon&&a.guideOn<=end&&a.guideOn<=iso(addDays(parse(a.due),-3)))items.push({why:(mid?'Midterm study guide done 3+ days early: ':'\u2605 Early study guide: ')+a.title,pts:mid?MIDP.guide:P.star});
+    if(mid){let n=0,p=0;days.forEach(d=>{const r=reviewDone(a,d);if(r&&r.done){n++;p+=r.ph.pts}});if(p)items.push({why:'Midterm review: '+a.title.replace(' midterm','')+' ('+n+' day'+(n===1?'':'s')+')',pts:p})}
+    if(a.grade!=null&&a.gradeOn&&a.gradeOn>=mon&&a.gradeOn<=end){if(mid){if(a.grade>=90)items.push({why:'A on '+a.title+' ('+a.grade+'%)',pts:MIDP.A});else if(a.grade>=80)items.push({why:'B on '+a.title+' ('+a.grade+'%)',pts:MIDP.B})}
+      else if(a.grade>=90){const v=a.type==='test'?P.testA:a.type==='quiz'?P.quizA:P.projA;items.push({why:'A on '+a.title+' ('+a.grade+'%)',pts:v})}}});
+  return {items,total:items.reduce((n,x)=>n+x.pts,0)}}
+const nextRate=()=>Math.min(20,5*(((S.bank&&S.bank.roll)||0)+1));
+function settleBank(){const t=iso(today());const cur=mondayOf(t);S.bank=S.bank||{bal:0,roll:0,hist:[]};const B=S.bank;
+  if(!B.last){B.last=iso(addDays(parse(cur),-7));save();return}
+  let changed=false;
+  while(iso(addDays(parse(B.last),7))<cur){const w=iso(addDays(parse(B.last),7));
+    if(B.bal>0){const r=nextRate();const add=Math.round(B.bal*r/100);if(add>0){B.bal+=add;B.hist.push({d:w,pts:add,why:'Interest for waiting ('+r+'%)'})}B.roll=(B.roll||0)+1}
+    const e=weekEarn(w);if(e.total>0){B.bal+=e.total;B.hist.push({d:w,pts:e.total,why:'Week of '+shortDate(w)+': '+e.items.map(x=>x.why).join(', ')})}
+    B.last=w;changed=true}
+  if(B.hist.length>300)B.hist=B.hist.slice(-300);if(changed)save()}
+const money=p=>{const r=PT().rate;return r?'$'+(p*r/100).toFixed(2).replace(/\.00$/,''):''};
+function renderBank(){const el=$('#bankCard');if(!el)return;settleBank();const B=S.bank;const cur=mondayOf(iso(today()));const e=weekEarn(cur);const P=PT();const r=nextRate();
+  const proj1=Math.round(B.bal*(1+r/100)),proj2=Math.round(proj1*(1+Math.min(20,r+5)/100));
+  el.innerHTML=`<div class="panel bank"><div class="bankhead"><div><div class="sub">In your bank</div><div class="bankbal">${B.bal} <span>points</span></div>${P.rate?`<div class="sub">Worth ${money(B.bal)}</div>`:''}</div>
+      <div class="bankweek"><div class="sub">This week so far</div><div class="bankwk">+${e.total}</div><div class="sub">Goes into the bank on Monday</div></div></div>
+    ${e.items.length?`<ul class="earn">${e.items.map(x=>`<li><span>${esc(x.why)}</span><b>+${x.pts}</b></li>`).join('')}</ul>`:'<p class="sub">Meet your daily goal today to start earning this week’s points.</p>'}
+    <div class="interest"><b>Wait and earn more.</b> ${B.bal>0?`If you keep your ${B.bal} points in the bank, they grow by ${r}% on Monday (to ${proj1}), and by ${Math.min(20,r+5)}% the week after (to ${proj2}).`:`Points you leave in the bank earn interest every week: 5% after one week, then 10%, 15%, and up to 20%.`} Cashing in starts the interest over at 5%.</div>
+    ${B.bal>0?`<details class="cashin"><summary>Cash in points</summary><div class="row" style="margin-top:.5rem"><input type="text" inputmode="numeric" id="cashAmt" placeholder="How many?" style="width:8rem"><input type="text" id="cashFor" placeholder="What for? (optional)" style="flex:1;min-width:10rem"><button class="btn small" id="cashGo" type="button">Cash in</button></div>
+      <p class="hint">Show Mom the history below when you cash in.</p><p class="import-msg" id="cashMsg"></p></details>`:''}
+    ${B.hist.length?`<div class="sub" style="margin:.8rem 0 .2rem">History</div><table class="logt"><tbody>${B.hist.slice().reverse().slice(0,10).map(h=>`<tr><td>${shortDate(h.d)}</td><td>${esc(h.why)}</td><td class="num"><b style="color:${h.pts<0?'var(--rose)':'#2E9E44'}">${h.pts>0?'+':''}${h.pts}</b></td></tr>`).join('')}</tbody></table>`:''}
+    <details class="cashin"><summary>How points work</summary><ul class="howpts">
+      <li>Meet your daily goal: <b>${P.day}</b> points a day</li><li>Meet your weekly goal: <b>${P.week}</b> bonus points</li><li>Finish a study guide 3+ days early: <b>${P.star}</b> points</li>
+      <li>An A (90% or higher): <b>${P.testA}</b> for a test, <b>${P.projA}</b> for a project or paper, <b>${P.quizA}</b> for a quiz</li><li>Each Monday, last week\u2019s points go into the bank, and banked points earn interest.</li></ul>
+      <div class="sub" style="margin:.5rem 0 .2rem"><b>Midterms</b> (points per subject, per day)</div><ul class="howpts">
+      <li>3 weeks before: review 15\u201320 min for <b>${MIDP.wk3}</b> points</li><li>2 weeks before: review 20\u201330 min for <b>${MIDP.wk2}</b> points</li>
+      <li>1 week before: review 30\u201345 min for <b>${MIDP.wk1}</b> points</li><li>Last 3 days: review 45+ min for <b>${MIDP.last}</b> points</li>
+      <li>Study guide done 3\u20134 days before: <b>${MIDP.guide}</b> points</li><li>Midterm grade: A = <b>${MIDP.A}</b> points, B = <b>${MIDP.B}</b> points</li></ul>
+      <div class="sub" style="margin:.6rem 0 .3rem">Settings (for Mom)</div>
+      <div class="grid three"><div><label for="ptDay">Points per daily goal</label><input type="text" inputmode="numeric" id="ptDay" value="${P.day}"></div><div><label for="ptTestA">Points per A on a test</label><input type="text" inputmode="numeric" id="ptTestA" value="${P.testA}"></div><div><label for="ptRate">Dollars per 100 points (0 for none)</label><input type="text" inputmode="decimal" id="ptRate" value="${P.rate}"></div></div></details></div>`}
+document.addEventListener('change',e=>{const t=e.target;const map={ptDay:'day',ptTestA:'testA',ptRate:'rate'};if(map[t.id]){const v=parseFloat(t.value);if(v>=0){S.pts=S.pts||{};S.pts[map[t.id]]=v;save();renderBank();renderWeek()}}});
+document.addEventListener('click',e=>{if(e.target.id!=='cashGo')return;const B=S.bank;const n=parseInt($('#cashAmt').value,10);const m=$('#cashMsg');
+  if(!(n>0&&n<=B.bal)){m.className='import-msg err';m.textContent='Enter a number up to '+B.bal+'.';return}
+  const why=$('#cashFor').value.trim();B.bal-=n;B.roll=0;B.hist.push({d:iso(today()),pts:-n,why:'Cashed in'+(why?': '+why:'')+(PT().rate?' ('+money(n)+')':'')});save();renderBank();renderWeek();
+  celebrate('Cashed in '+n+' points'+(PT().rate?' ('+money(n)+')':'')+'. Nice work earning them!','#F5C400',true)});
+
+/* ---------- My progress tab ---------- */
+function renderProgress(){const el=$('#trailCard');if(!el)return;const tr=trailSteps();
+  el.innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">Trail to midterms</h3><span class="sub">${tr.done} of ${tr.steps.length} steps</span></div>
+    <p class="sub" style="margin:.2rem 0 .4rem">Every day you meet your daily goal moves you up the trail. In the week before each midterm, each day you review that subject is a step, and so is each study guide. Reviewing 2–3 weeks early adds bonus steps. Missed days just drop off. You never move backward.</p>
+    ${trailSVG(tr)}<div class="tkey"><span><i style="background:#2E9E44"></i>Done</span><span><i style="background:#F5C400"></i>Study guide done</span><span>\u2605 Done early</span><span><i class="hollow"></i>Still ahead</span></div></div>`;
+  renderBank();renderGrades();$('#bestsCard').innerHTML=`<div class="panel">${bestsHTML()}</div>`;
+  const wg=$('#weekGoalSel');if(wg)wg.value=String(weekGoal())}
+document.addEventListener('change',e=>{if(e.target.id==='weekGoalSel'){S.weekGoal=+e.target.value;save();renderWeek()}});
+function bests(){const L=S.log||[];const byDay={};L.forEach(x=>{byDay[x.d]=(byDay[x.d]||0)+x.m});const DL=S.dayLog||{};
+  let streak=0,best=0;Object.keys(DL).sort().forEach(k=>{const dw=parse(k).getDay();if(dw===0||dw===6)return;if(DL[k].full){streak++;best=Math.max(best,streak)}else if(k<iso(today()))streak=0});
+  const weeks={};Object.keys(DL).forEach(k=>{if(!DL[k].full)return;const d=parse(k);const dw=d.getDay();if(dw===0||dw===6)return;const mon=iso(addDays(d,-((dw+6)%7)));weeks[mon]=(weeks[mon]||0)+1});
+  return {early:(S.assignments||[]).filter(a=>a.guideOn&&a.guideOn<=iso(addDays(parse(a.due),-3))).length,sess:Math.max(0,...L.map(x=>x.m)),day:Math.max(0,...Object.values(byDay)),days:Object.values(DL).filter(x=>x.full).length,wk:Object.values(weeks).filter(n=>n>=weekGoal()).length,streak:best}}
+function bestsHTML(){const b=bests();const old=S.best;
+  if(old){const names={sess:'longest focus session',day:'most homework in a day',streak:'longest daily goal streak'};const t=iso(today());S.pbShown=S.pbShown&&S.pbShown.d===t?S.pbShown:{d:t,k:[]};
+    const k=Object.keys(names).find(k=>b[k]>(old[k]||0)&&b[k]>0&&!S.pbShown.k.includes(k));if(k){S.pbShown.k.push(k);setTimeout(()=>celebrate('New personal best: '+names[k]+'!','#F5C400',true),5400)}}
+  S.best=b;const row=(l,v)=>`<div class="pb"><span>${l}</span><b>${v}</b></div>`;
+  return `<h3>Personal bests</h3><p class="sub">Your own records. Beat them, not anyone else.</p>${row('Longest focus session',b.sess?fmtMin(b.sess):'—')}${row('Most homework in a day',b.day?fmtMin(b.day):'—')}${row('Daily goal streak (school days)',b.streak?b.streak+' day'+(b.streak===1?'':'s'):'—')}${row('Days you met your daily goal',b.days||'—')}${row('Weeks you met your weekly goal',b.wk||'—')}${row('★ Study guides finished early',b.early||'—')}
+    <div style="margin-top:.8rem"><label for="weekGoalSel">Weekly goal: meet the daily goal on</label><select id="weekGoalSel" style="width:auto">${[3,4,5].map(n=>`<option value="${n}" ${n===weekGoal()?'selected':''}>${n} school days</option>`).join('')}</select></div>`}
+function celebrate(msg,color,big){const el=$('#toast');el.innerHTML=`<span class="tdot" style="background:${color}"></span>${esc(msg)}`;el.className='toast on'+(big?' big':'');
+  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{el.className='toast'},big?5000:3000)}
+
+document.addEventListener('change',e=>{const t=e.target;const D=iso(today());
+  if(t.dataset&&t.dataset.goal){S.gdone=S.gdone||{};const L=S.gdone[D]=S.gdone[D]||[];const i=L.indexOf(t.dataset.goal);if(t.checked&&i<0)L.push(t.dataset.goal);if(!t.checked&&i>=0)L.splice(i,1);save();renderAll()}
+  if(t.dataset&&t.dataset.guide){const a=S.assignments.find(x=>x.id===t.dataset.guide);if(a){a.guideOn=t.checked?D:null;save();renderAll()}}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-studygo]');if(b){const a=S.assignments.find(x=>x.id===b.dataset.studygo);if(a)startTimer(+b.dataset.min||30,{cls:clsGroup(a.cls),note:(isMid(a)?'Review for ':'Study for ')+a.title})}});
+
 function renderFocus(){const a=nextUp();const b=$('#focusBody');
   const startBtns=`<div class="startpick"><div style="opacity:.75;font-size:.9rem;margin-bottom:.35rem">Which class?</div>${chipsHTML(defaultCls(),'data-pickcls')}
     <input type="text" id="focusNote" class="focusnote" placeholder="What are you working on? (optional)" maxlength="80" aria-label="What are you working on?"></div><div class="starts"><span class="lbl">You don’t have to finish. Just start for:</span>
@@ -747,7 +1002,7 @@ function renderRun(){clearInterval(tInt);const r=S.run;const bar=$('#runBar');co
     bar.hidden=onToday}
   else bar.hidden=true;
   document.body.classList.toggle('hasbar',!bar.hidden)}
-function tickRun(){const r=S.run;if(!r)return;let txt;
+function tickRun(){const r=S.run;if(!r)return;let txt;if(!tickRun.n||Date.now()-tickRun.n>30000){tickRun.n=Date.now();renderGoals()}
   if(r.end){const left=(r.end-Date.now())/1000;const tot=(r.end-r.start)/1000+(r.total||0)*60;txt=fmtClock(left);$('#prog').style.strokeDashoffset=C*(1-Math.max(0,left)/tot);if(left<=0){finishRun(false);return}}
   else{const el=(Date.now()-r.start)/1000+(r.total||0)*60;txt=fmtClock(el);$('#prog').style.strokeDashoffset=C*(1-(el%1500)/1500)}
   $('#time').textContent=txt;const rb=$('#rbTime');if(rb)rb.textContent=txt+(r.end?' left':'')}
@@ -875,16 +1130,16 @@ const COURSES=[
 ];
 function checkedToday(){const t=iso(today());if(!S.cls||S.cls.date!==t)S.cls={date:t,ids:[]};return S.cls.ids}
 function renderClasses(){}
-function markCls(id,on){const ids=checkedToday();const i=ids.indexOf(id);if(on&&i<0)ids.push(id);if(!on&&i>=0)ids.splice(i,1);save();renderClasses();renderFocus();renderDue()}
+function markCls(id,on){const ids=checkedToday();const i=ids.indexOf(id);if(on&&i<0)ids.push(id);if(!on&&i>=0)ids.splice(i,1);save();renderClasses();renderFocus();renderDue();renderGoals()}
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.cls)markCls(t.dataset.cls,t.checked)});
 document.addEventListener('click',e=>{const a=e.target.closest('[data-clslink]');if(a)setTimeout(()=>markCls(a.dataset.clslink,true),50)});
 const LEGEND='<div class="legend" aria-label="Color key"><span><i style="background:var(--rose)"></i>Overdue</span><span><i style="background:var(--sun)"></i>Due today or tomorrow</span><span><i style="background:var(--later)"></i>Later</span></div>';
 function renderTodaySessions(){const ts=iso(today());const tm=iso(addDays(today(),1));const f=nextUp();
   /* coming up: a short list */
-  const up=sorted().filter(a=>!a.done).slice(0,5);
+  const up=sorted().filter(a=>!a.done&&a.due>tm).slice(0,5);
   const dueCount=S.assignments.filter(a=>!a.done&&a.due<=tm).length;
-  $('#dueSoon').innerHTML=up.length?`<div class="panel"><h3>Coming up</h3>${LEGEND}${up.map(a=>{const d=dueLabel(a.due);return `<div class="item u-${d.c}" style="background:var(--bg)"><input type="checkbox" class="check" data-act="done" data-id="${a.id}" aria-label="Mark done: ${esc(a.title)}"><div><div class="t">${esc(a.title)}</div><div class="sub"><span class="tag ${d.c}">${d.t}</span>${esc(a.cls||'')}</div>${S.run&&S.run.aid===a.id?`<button class="btn small" data-work="${a.id}" style="margin-top:.4rem">■ Stop and save time</button>`:`<button class="btn ghost small" data-work="${a.id}" style="color:var(--accent);margin-top:.4rem">▶ Start working</button>`}</div><span></span></div>`}).join('')}
-    ${dueCount?`<a href="#due" class="icon" style="color:var(--accent);padding-left:0;text-decoration:none;display:inline-block">See everything due by tomorrow (${dueCount})</a>`:''}</div>`:'';
+  $('#dueSoon').innerHTML=up.length?`<div class="panel"><h3>Coming up after that</h3>${LEGEND}${up.map(a=>{const d=dueLabel(a.due);return `<div class="item u-${d.c}" style="background:var(--bg)"><input type="checkbox" class="check" data-act="done" data-id="${a.id}" aria-label="Mark done: ${esc(a.title)}"><div><div class="t">${esc(a.title)}</div><div class="sub"><span class="tag ${d.c}">${d.t}</span>${esc(a.cls||'')}</div>${S.run&&S.run.aid===a.id?`<button class="btn small" data-work="${a.id}" style="margin-top:.4rem">■ Stop and save time</button>`:`<button class="btn ghost small" data-work="${a.id}" style="color:var(--accent);margin-top:.4rem">▶ Start working</button>`}</div><span></span></div>`}).join('')}
+    </div>`:'';
   /* next test or quiz */
   const a=sorted().find(x=>!x.done&&(x.type==='test'||x.type==='quiz')&&diff(x.due)>=0);
   const others=S.plans.filter(p=>!a||p.aid!==a.id).reduce((n,p)=>n+p.days.filter(d=>d.date===ts&&!d.done).length,0);
@@ -899,7 +1154,7 @@ function renderTodaySessions(){const ts=iso(today());const tm=iso(addDays(today(
     else if(d&&d.done)body=`<p class="t">You did today’s study session. Nice work.</p>`;
     else{const nx=p.days.find(x=>x.date>ts&&!x.done);body=`<p class="t">${nx?'Your study plan starts '+dayName(nx.date)+'.':'Your study plan is all set.'}</p>`}
     body+=`<a href="#tests" class="icon" style="color:var(--accent);padding-left:0;text-decoration:none;display:inline-block;margin-top:.4rem">See your study plan</a>`}
-  else{let m=a.type==='quiz'?15:25;if(n>0&&n<=2)m+=15;if(n===0)m=10;
+  else{let m=a.type==='quiz'?15:30;if(isMid(a)){const ph=midPhase(n);m=ph?ph.min:30}if(n===0)m=10;
     const tip=n===0?'Do a quick review of your trickiest topic before it starts.':n<=2?'It’s close, so give it a little more time today.':'A little each day beats cramming. A study plan spreads it out for you.';
     body=`<p class="t" style="margin-bottom:.25rem">Spend ${m} minutes studying today.</p><p class="sub">${tip}</p>
       <div class="row"><button class="btn small" data-act="start" data-min="${m}" data-aid="${a.id}">Start ${m} minutes</button>${n>0?`<button class="icon" data-act="plan" data-id="${a.id}" style="color:var(--accent)">Make a study plan</button>`:''}</div>`}
@@ -1243,15 +1498,15 @@ function renderStart(){const el=$('#getStarted');const A=S.assignments||[];
     <ol class="gslist">
       ${step(c1,1,'Bring in your Canvas assignments','In Canvas, click Calendar, then Calendar Feed (bottom right). Copy the link, paste it into a new browser tab to download the file, then choose that file here. Bookmark the link for next time.','<button class="btn small" data-gogo="canvas">Go to Canvas import</button>')}
       ${step(c2,2,'Add teacher schedules that aren\u2019t on Canvas','Like the World History assignment sheet. Copy the whole table from Google Sheets and paste it in. Everything is added at once.','<button class="btn ghost small" data-gogo="sheet" style="color:var(--accent)">Go to assignment sheets</button>')}
-      ${step(false,3,'Write down anything else as you hear about it','Use the \u201cWrite it down before you forget\u201d box at the bottom of Today. One line is enough.','')}
+      ${step(false,3,'Write down anything else as you hear about it','Tap \u201c+ Add something\u201d under Today\u2019s goals. One line is enough.','')}
     </ol></div>`}
 document.addEventListener('click',e=>{const t=e.target;
   if(t.id==='gsHide'){S.gsHide=true;save();renderStart()}
   const g=t.closest('[data-gogo]');if(g){location.hash='assignments';setTimeout(()=>{const k=g.dataset.gogo;const h=$(k==='canvas'?'#canvasPanel':'#sheetPanel');
     if(k==='canvas'){const d=h.parentElement.querySelector('details');if(d)d.open=true}else{const d=h.parentElement.querySelector('details');if(d)d.open=true}
     h.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})},60)}});
-function renderAll(){renderStart();renderClasses();renderFree();renderFreeNote();renderTime();renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
-clearPast();renderAll();route();pullFeed(false);
+function renderAll(){renderStart();renderGoals();renderClasses();renderFree();renderFreeNote();renderTime();renderFocus();renderList();renderPlans();renderTodaySessions();renderDue();renderImport();renderStartChips()}
+seedMidterms();clearPast();renderAll();route();pullFeed(false);
 if(S.run&&Date.now()-S.run.start>12*3600e3){S.run=null;save()}
 renderRun();
 /* keep dates current if the page stays open overnight */
