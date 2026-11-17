@@ -110,6 +110,12 @@ section[data-view].on{display:block}
 .cashin{background:none;border:0;margin:.5rem 0 0}.cashin summary{padding:.4rem 0;color:var(--accent);font-weight:500}
 .howpts{margin:.3rem 0;padding-left:1.1rem;font-size:.92rem}.howpts li{margin-bottom:.25rem}
 .ptsline{display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;text-decoration:none;color:var(--ink);background:var(--sun-soft);border-radius:10px;padding:.55rem .8rem;margin-top:1rem;font-size:.92rem}.ptsline b{font-weight:700}
+.grp{background:none;border:0;margin:.2rem 0 0}.grp summary{padding:.2rem 0;font-size:.88rem;color:var(--accent);font-weight:400}.grp summary::after,.grp[open] summary::after{content:''}
+details.extra summary{justify-content:flex-start;gap:.35rem}details.extra summary::after{margin-left:auto}
+.subitems.ahead li{justify-content:space-between;border-top:1px solid var(--line);padding:.4rem 0}.subitems.ahead li > span{flex:1}
+.subitems{list-style:none;margin:.4rem 0 0;padding:0}.subitems li{display:flex;gap:.5rem;align-items:center;padding:.2rem 0;font-size:.93rem}.subitems li.d span{text-decoration:line-through;color:var(--muted)}
+.subitems .check{width:1.25rem;height:1.25rem}.subitems .check:checked::after{width:.32rem;height:.6rem;border-width:0 2px 2px 0}
+details.extra{background:none;border:0;border-top:1px solid var(--line);border-radius:0;margin:.6rem 0 0}details.extra summary{padding:.7rem 0;font-weight:400;font-size:.92rem;color:var(--muted)}details.extra summary b{color:var(--ink);font-weight:600}
 .wkdays{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem}
 .wkd{display:flex;flex-direction:column;align-items:center;gap:.2rem;font-size:.8rem;color:var(--muted)}
 .wkd b{width:2.3rem;height:2.3rem;border-radius:10px;border:2px solid var(--line);display:grid;place-items:center;color:#fff;font-size:1rem}
@@ -698,7 +704,7 @@ function freeSuggestions(f){const out=[];const D=f.date;const fEnd=toMin(f.end);
   open.filter(a=>(a.type==='test'||a.type==='quiz')&&a.due>=D&&diff(a.due)-f.i<=3).slice(0,1).forEach(a=>out.push({t:'Study for '+a.title+' with flashcards or practice questions',min:20,cls:clsGroup(a.cls),why:'Short study sessions spread over a few days stick better than cramming.'}));
   const next=(SCHED[parse(D).getDay()]||[]).find(x=>toMin(x[1])>=fEnd);
   if(next)out.push({t:'Look over your '+courseName(next[0])+' notes before class',min:5,cls:courseName(next[0]),why:'A quick preview makes class easier to follow.'});
-  if(f.i===0&&COURSES.some(c=>!checkedToday().includes(c.id)))out.push({t:'Check your class pages',min:5,cls:'Other',why:'Catch changes before they surprise you.'});
+  if(f.i===0&&pagesDay()&&COURSES.some(c=>!checkedToday().includes(c.id)))out.push({t:'Check your class pages',min:5,cls:'Other',why:'Catch changes before they surprise you.'});
   out.push({t:'Email or visit a teacher with one question',min:5,cls:'Other',why:'Asking early is easier than catching up later.'});
   out.push({t:'Clean out your backpack and file loose papers',min:10,cls:'Other',why:'Less clutter means less to keep track of.'});
   out.push({t:'Stretch, get water, and walk before your next class',min:5,cls:'Other',why:'Moving resets your focus.'});
@@ -748,17 +754,25 @@ function midPhase(dd){if(dd>=15&&dd<=21)return {min:15,label:'15–20 min',pts:M
   if(dd>=4&&dd<=7)return {min:30,label:'30–45 min',pts:MIDP.wk1,opt:false,name:'1 week out'};if(dd>=1&&dd<=3)return {min:45,label:'45+ min',pts:MIDP.last,opt:false,name:'final days'};return null}
 const isMid=a=>a&&(a.src==='midterm'||/midterm|final exam/i.test(a.title||''));
 function reviewDone(a,D){const ph=midPhase(Math.round((parse(a.due)-parse(D))/864e5));if(!ph)return null;const gd=(S.gdone&&S.gdone[D])||[];return {ph,done:minutesFor(clsGroup(a.cls),D)>=ph.min||gd.includes('study:'+a.id)}}
+const isEvent=a=>!!(a&&a.uid&&/calendar[-_]?event/i.test(a.uid));
+/* class pages are checked on Mondays and Wednesdays */
+const PAGE_DAYS=[1,3];const pagesDay=d=>PAGE_DAYS.includes((d?parse(d):today()).getDay());
+function nextPagesDay(){for(let i=1;i<8;i++){const d=addDays(today(),i);if(PAGE_DAYS.includes(d.getDay()))return d.toLocaleDateString(undefined,{weekday:'long'})}return ''}
 function nextSchool(D){let d=addDays(parse(D),1);while(d.getDay()===0||d.getDay()===6)d=addDays(d,1);return iso(d)}
 function minutesFor(cls,D){let m=(S.log||[]).filter(x=>x.d===D&&entryCls(x)===cls).reduce((n,x)=>n+x.m,0);
   if(S.run&&D===iso(today())&&clsGroup(S.run.cls)===cls){let el=(Date.now()-S.run.start)/1000;if(S.run.end)el=Math.min(el,(S.run.end-S.run.start)/1000);m+=Math.floor(el/60)}return m}
 const shortDay=D=>parse(D).toLocaleDateString(undefined,{weekday:'long'});
 function goalsFor(D){const out=[];const dow=parse(D).getDay();const gd=(S.gdone&&S.gdone[D])||[];const isToday=D===iso(today());
-  if(dow>=1&&dow<=5){const n=isToday?checkedToday().length:((S.dayLog&&S.dayLog[D]&&S.dayLog[D].pages)||0);
+  if(PAGE_DAYS.includes(dow)){const n=isToday?checkedToday().length:((S.dayLog&&S.dayLog[D]&&S.dayLog[D].pages)||0);
     out.push({id:'pages',kind:'pages',label:'Check the Canvas page for each class',sub:n+' of '+COURSES.length+' checked (in the box above)',done:n>=COURSES.length})}
   if(dow===1)out.push({id:'planner',kind:'manual',label:'Update your planner',sub:'Write this week’s due dates and tests in it.',done:gd.includes('planner')});
   const ns=nextSchool(D);
-  sorted().filter(a=>a.type!=='test'&&a.type!=='quiz'&&((!a.done&&a.due<=ns)||(a.done&&a.doneOn===D))).forEach(a=>{
-    out.push({id:'due:'+a.id,kind:'due',aid:a.id,label:'Finish '+a.title,sub:(a.cls?clsGroup(a.cls)+' · ':'')+dueLabel(a.due).t,done:!!a.done})});
+  const hw=sorted().filter(a=>a.type!=='test'&&a.type!=='quiz'&&!isEvent(a));
+  const groups={};hw.filter(a=>a.due>=D&&a.due<=ns&&(!a.done||a.doneOn===D)).forEach(a=>{const c=clsGroup(a.cls);(groups[c]=groups[c]||[]).push(a)});
+  Object.keys(groups).forEach(c=>{const L=groups[c];const dn=L.every(a=>a.done);
+    if(L.length===1){const a=L[0];out.push({id:'due:'+a.id,kind:'due',aid:a.id,label:'Finish '+a.title,sub:(c!=='Other'?c+' · ':'')+dueLabel(a.due).t,done:!!a.done})}
+    else out.push({id:'cls:'+c,kind:'group',items:L,label:(c!=='Other'?c+': ':'')+'finish '+L.length+' assignments',sub:L.filter(a=>a.done).length+' of '+L.length+' done',done:dn})});
+  hw.filter(a=>!a.done&&a.due<D).slice(0,8).forEach(a=>out.push({id:'late:'+a.id,kind:'due',aid:a.id,label:a.title,sub:(a.cls?clsGroup(a.cls)+' · ':'')+dueLabel(a.due).t,done:false,catchup:true}));
   S.assignments.filter(a=>a.type==='test'&&isMid(a)).forEach(a=>{const X=a.due;const dd=Math.round((parse(X)-parse(D))/864e5);if(dd<1)return;const cls=clsGroup(a.cls);
     const ph=midPhase(dd);if(ph){const m=minutesFor(cls,D);const man=gd.includes('study:'+a.id);
       out.push({id:'study:'+a.id,kind:'study',aid:a.id,cls,start:ph.min,label:'Review for '+a.title+' ('+ph.label+')',sub:(m>=ph.min?'Done. +'+ph.pts+' points.':m+' of '+ph.min+' minutes. Earns '+ph.pts+' points.')+' Midterm in '+dd+' day'+(dd===1?'':'s')+'.',done:m>=ph.min||man,optional:ph.opt})}
@@ -771,33 +785,41 @@ function goalsFor(D){const out=[];const dow=parse(D).getDay();const gd=(S.gdone&
     const due2=iso(addDays(parse(X),-2)),due3=iso(addDays(parse(X),-3));
     if(a.guideOn){if(a.guideOn===D)out.push({id:'guide:'+a.id,kind:'guide',aid:a.id,label:'Finish the study guide for '+a.title,sub:a.guideOn<=due3?'Done early. Bonus star earned!':'Done on time.',done:true,bonus:a.guideOn<=due3})}
     else if(dd<=7&&D<=due2)out.push({id:'guide:'+a.id,kind:'guide',aid:a.id,label:'Finish the study guide for '+a.title,sub:(D===due2?'Due today.':'Due by '+shortDay(due2)+'.')+(D<=due3?' Finish by '+shortDay(due3)+' for a bonus star!':''),done:false,optional:D<due2})});
+  /* nothing due? then work ahead on what's coming up (no day off when tests or projects are ahead) */
+  if(!out.some(g=>!g.optional&&!g.catchup&&['due','group','study','guide'].includes(g.kind))){
+    const ahead=sorted().filter(a=>!a.done&&!isEvent(a)&&a.due>ns&&a.due<=iso(addDays(parse(D),14))).sort((x,y)=>(GRADED.includes(x.type)?0:1)-(GRADED.includes(y.type)?0:1)||(x.due<y.due?-1:1)).slice(0,3);
+    if(ahead.length){const m=(S.log||[]).filter(x=>x.d===D).reduce((n,x)=>n+x.m,0)+(S.run&&isToday?Math.floor(Math.min((Date.now()-S.run.start)/1000,S.run.end?(S.run.end-S.run.start)/1000:1e9)/60):0);
+      out.push({id:'ahead',kind:'ahead',items:ahead,label:'Work ahead for 30 minutes',sub:m>=30||gd.includes('ahead')?'Done. Nice work getting ahead.':m+' of 30 minutes. Nothing is due tomorrow, so get a head start on what’s coming:',done:m>=30||gd.includes('ahead')})}}
   return out}
-function renderGoals(){const D=iso(today());const ALL=goalsFor(D);const G=ALL.filter(g=>!g.optional);const EX=ALL.filter(g=>g.optional);const done=G.filter(g=>g.done).length,total=G.length,bonus=G.filter(g=>g.bonus).length;
+const openGrp=new Set();
+document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.grp){if(d.open)openGrp.add(d.dataset.grp);else openGrp.delete(d.dataset.grp)}},true);
+function renderGoals(){const D=iso(today());const ALL=goalsFor(D);const G=ALL.filter(g=>!g.optional&&!g.catchup);const EX=ALL.filter(g=>g.optional);const CU=ALL.filter(g=>g.catchup);const done=G.filter(g=>g.done).length,total=G.length,bonus=G.filter(g=>g.bonus).length;
   S.dayLog=S.dayLog||{};const prev=S.dayLog[D]||{done:0,total:0,bonus:0};const full=total>0&&done===total;
-  S.dayLog[D]={done,total,bonus,pages:checkedToday().length,full};const ks=Object.keys(S.dayLog).sort();while(ks.length>200){delete S.dayLog[ks.shift()]}
+  S.dayLog[D]={done,total,bonus,pages:checkedToday().length,full,free:total===0};const ks=Object.keys(S.dayLog).sort();while(ks.length>200){delete S.dayLog[ks.shift()]}
   const pct=total?Math.round(done/total*100):0;
   $('#goalsCard').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">Daily goal</h3><span class="sub">${total?done+' of '+total+' done':''}</span></div>
     ${total?`<p class="sub" style="margin:.2rem 0 0">${full?'Daily goal met. Nice work today.':'Finish everything on this list to meet today’s goal.'}</p><div class="gbar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}" aria-label="Goals done today"><b style="width:${pct}%"></b></div>
     <ul class="glist">${G.map(g=>{let box;
-      if(g.kind==='pages')box=`<span class="gauto ${g.done?'on':''}" aria-hidden="true">${g.done?'✓':''}</span>`;
+      if(g.kind==='pages'||g.kind==='group')box=`<span class="gauto ${g.done?'on':''}" aria-hidden="true">${g.done?'✓':''}</span>`;
       else if(g.kind==='due')box=`<input type="checkbox" class="check" data-act="done" data-id="${g.aid}" ${g.done?'checked':''} aria-label="Done: ${esc(g.label)}">`;
       else if(g.kind==='guide')box=`<input type="checkbox" class="check" data-guide="${g.aid}" ${g.done?'checked':''} aria-label="Done: ${esc(g.label)}">`;
       else box=`<input type="checkbox" class="check" data-goal="${g.id}" ${g.done?'checked':''} aria-label="Done: ${esc(g.label)}">`;
       const act=g.kind==='study'&&!g.done?`<button class="btn small" data-studygo="${g.aid}" data-min="${g.start||30}">Start ${g.start||30} min</button>`:'';
-      return `<li class="${g.done?'d':''}">${box}<div class="gtx"><div class="t">${esc(g.label)}${g.bonus?' <span class="bonus">\u2605 bonus</span>':''}</div><div class="sub">${esc(g.sub)}</div>${act}</div></li>`}).join('')}</ul>`
-    :'<p class="sub">No goals today. Enjoy your day off!</p>'}
-    ${EX.length?`<div class="extra"><div class="sub" style="margin:.8rem 0 .1rem"><b>Get ahead (optional)</b> \u00b7 earns points, not part of today\u2019s goal</div><ul class="glist">${EX.map(g=>`<li class="${g.done?'d':''}"><input type="checkbox" class="check" ${g.done?'checked':''} ${g.kind==='guide'?`data-guide="${g.aid}"`:`data-goal="${g.id}"`} aria-label="Done: ${esc(g.label)}"><div class="gtx"><div class="t">${esc(g.label)}</div><div class="sub">${esc(g.sub)}</div>${g.kind==='study'&&!g.done?`<button class="btn ghost small" data-studygo="${g.aid}" data-min="${g.start}" style="color:var(--accent);margin-top:.4rem">Start ${g.start} min</button>`:''}</div></li>`).join('')}</ul></div>`:''}</div>`;
+      return `<li class="${g.done?'d':''}">${box}<div class="gtx"><div class="t">${esc(g.label)}${g.bonus?' <span class="bonus">\u2605 bonus</span>':''}</div><div class="sub">${esc(g.sub)}</div>${g.kind==='ahead'?`<ul class="subitems ahead">${g.items.map(a=>`<li><span><b>${esc(a.title)}</b> <span class="sub">\u00b7 ${esc(clsGroup(a.cls))} \u00b7 ${dueLabel(a.due).t}</span></span>${g.done?'':`<button class="btn ghost small" data-aheadgo="${a.id}" style="color:var(--accent)">Start</button>`}</li>`).join('')}</ul>`:''}${g.kind==='group'?`<details class="grp" data-grp="${esc(g.id)}" ${openGrp.has(g.id)?'open':''}><summary>Show the ${g.items.length}</summary><ul class="subitems">${g.items.map(a=>`<li class="${a.done?'d':''}"><input type="checkbox" class="check" data-act="done" data-id="${a.id}" ${a.done?'checked':''} aria-label="Done: ${esc(a.title)}"><span>${esc(a.title)}</span></li>`).join('')}</ul></details>`:''}${act}</div></li>`}).join('')}</ul>`
+    :`<p class="sub">${[0,6].includes(today().getDay())?'No goals today. Enjoy your day off!':'Nothing due and nothing coming up in the next two weeks, so today counts toward your weekly goal. Enjoy the break!'}</p>`}
+    ${CU.length?`<details class="extra catchup"><summary><b>Catch up</b> \u00b7 ${CU.length} past due, not part of today\u2019s goal</summary><ul class="glist">${CU.map(g=>`<li><input type="checkbox" class="check" data-act="done" data-id="${g.aid}" aria-label="Done: ${esc(g.label)}"><div class="gtx"><div class="t">${esc(g.label)}</div><div class="sub">${esc(g.sub)} \u00b7 Done or no longer needed? Check it off.</div></div></li>`).join('')}</ul></details>`:''}
+    ${EX.length?`<details class="extra"><summary><b>Get ahead (optional)</b> \u00b7 ${EX.length} thing${EX.length===1?'':'s'} that earn points</summary><ul class="glist">${EX.map(g=>`<li class="${g.done?'d':''}"><input type="checkbox" class="check" ${g.done?'checked':''} ${g.kind==='guide'?`data-guide="${g.aid}"`:`data-goal="${g.id}"`} aria-label="Done: ${esc(g.label)}"><div class="gtx"><div class="t">${esc(g.label)}</div><div class="sub">${esc(g.sub)}</div>${g.kind==='study'&&!g.done?`<button class="btn ghost small" data-studygo="${g.aid}" data-min="${g.start}" style="color:var(--accent);margin-top:.4rem">Start ${g.start} min</button>`:''}</div></li>`).join('')}</ul></details>`:''}</div>`;
   renderWeek();renderProgress();
   if(prev.done<done&&prev.total){if(full)celebrate('Daily goal met! Every goal done today.','#2E9E44',true);else celebrate('Nice! '+done+' of '+total+' done today.','#58B947')}
   save()}
 /* ---------- weekly goal ---------- */
 const weekGoal=()=>(S.weekGoal||4);
 function weekDays(){const mon=addDays(today(),-((today().getDay()+6)%7));return [0,1,2,3,4].map(i=>iso(addDays(mon,i)))}
-function renderWeek(){const days=weekDays();const DL=S.dayLog||{};const t=iso(today());const met=days.filter(d=>DL[d]&&DL[d].full).length;const g=weekGoal();const hit=met>=g;
+function renderWeek(){const days=weekDays();const DL=S.dayLog||{};const t=iso(today());const met=days.filter(d=>DL[d]&&(DL[d].full||DL[d].free)).length;const g=weekGoal();const hit=met>=g;
   const tr=trailSteps();const nextFlag=tr.steps.find(s=>s.kind==='test'&&!s.done);
   $('#weekCard').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">Weekly goal</h3><span class="sub">${met} of ${g} days</span></div>
     <p class="sub" style="margin:.2rem 0 .7rem">${hit?'Weekly goal met!':'Meet your daily goal on '+g+' school days this week.'}</p>
-    <div class="wkdays">${days.map(d=>{const on=DL[d]&&DL[d].full;const fut=d>t;return `<div class="wkd ${on?'on':''} ${fut?'fut':''} ${d===t?'today':''}" title="${dayName(d)}"><b>${on?'✓':''}</b><span>${parse(d).toLocaleDateString(undefined,{weekday:'short'})}</span></div>`}).join('')}</div>
+    <div class="wkdays">${days.map(d=>{const on=DL[d]&&(DL[d].full||DL[d].free);const fut=d>t;return `<div class="wkd ${on?'on':''} ${fut?'fut':''} ${d===t?'today':''}" title="${dayName(d)}"><b>${on?'✓':''}</b><span>${parse(d).toLocaleDateString(undefined,{weekday:'short'})}</span></div>`}).join('')}</div>
     ${(()=>{settleBank();const wk=weekEarn(mondayOf(t)).total;const prevPts=S.wkPts;S.wkPts={w:mondayOf(t),p:wk};if(prevPts&&prevPts.w===mondayOf(t)&&wk>prevPts.p)setTimeout(()=>celebrate('+'+(wk-prevPts.p)+' points! '+wk+' this week.','#F5C400'),3200);
       return `<a href="#progress" class="ptsline"><span><b>+${wk}</b> points this week</span><span><b>${S.bank.bal}</b> in the bank</span></a>`})()}
     <div class="minitrail"><div class="row" style="justify-content:space-between;align-items:baseline"><b>Trail to midterms</b><span class="sub">${tr.done} of ${tr.steps.length} steps</span></div>
@@ -876,7 +898,7 @@ const shortDate=D=>parse(D).toLocaleDateString(undefined,{month:'short',day:'num
 function weekEarn(mon){const P=PT();const DL=S.dayLog||{};const end=iso(addDays(parse(mon),6));const items=[];
   const days=[0,1,2,3,4,5,6].map(i=>iso(addDays(parse(mon),i)));const full=days.filter(d=>DL[d]&&DL[d].full);
   if(full.length)items.push({why:'Daily goal met '+full.length+' day'+(full.length===1?'':'s'),pts:full.length*P.day});
-  const school=days.slice(0,5).filter(d=>DL[d]&&DL[d].full).length;if(school>=weekGoal())items.push({why:'Weekly goal met',pts:P.week});
+  const school=days.slice(0,5).filter(d=>DL[d]&&(DL[d].full||DL[d].free)).length;if(school>=weekGoal())items.push({why:'Weekly goal met',pts:P.week});
   (S.assignments||[]).forEach(a=>{const mid=isMid(a);
     if(a.guideOn&&a.guideOn>=mon&&a.guideOn<=end&&a.guideOn<=iso(addDays(parse(a.due),-3)))items.push({why:(mid?'Midterm study guide done 3+ days early: ':'\u2605 Early study guide: ')+a.title,pts:mid?MIDP.guide:P.star});
     if(mid){let n=0,p=0;days.forEach(d=>{const r=reviewDone(a,d);if(r&&r.done){n++;p+=r.ph.pts}});if(p)items.push({why:'Midterm review: '+a.title.replace(' midterm','')+' ('+n+' day'+(n===1?'':'s')+')',pts:p})}
@@ -941,6 +963,7 @@ function celebrate(msg,color,big){const el=$('#toast');el.innerHTML=`<span class
 document.addEventListener('change',e=>{const t=e.target;const D=iso(today());
   if(t.dataset&&t.dataset.goal){S.gdone=S.gdone||{};const L=S.gdone[D]=S.gdone[D]||[];const i=L.indexOf(t.dataset.goal);if(t.checked&&i<0)L.push(t.dataset.goal);if(!t.checked&&i>=0)L.splice(i,1);save();renderAll()}
   if(t.dataset&&t.dataset.guide){const a=S.assignments.find(x=>x.id===t.dataset.guide);if(a){a.guideOn=t.checked?D:null;save();renderAll()}}});
+document.addEventListener('click',e=>{const h=e.target.closest('[data-aheadgo]');if(h){const w=fromAid(h.dataset.aheadgo);if(w){const a=S.assignments.find(x=>x.id===h.dataset.aheadgo);w.note=(['test','quiz'].includes(a.type)?'Study ahead: ':'Work ahead: ')+a.title;startTimer(30,w)}}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-studygo]');if(b){const a=S.assignments.find(x=>x.id===b.dataset.studygo);if(a)startTimer(+b.dataset.min||30,{cls:clsGroup(a.cls),note:(isMid(a)?'Review for ':'Study for ')+a.title})}});
 
 function renderFocus(){const a=nextUp();const b=$('#focusBody');
@@ -955,11 +978,11 @@ function renderFocus(){const a=nextUp();const b=$('#focusBody');
   const dow=today().getDay();const sd=SCHED[dow]?dow:1;const todays=SCHED[sd];
   const ordered=todays.map(x=>({c:COURSES.find(c=>c.id===x[0]),time:x[1]})).concat(COURSES.filter(c=>!todays.some(x=>x[0]===c.id)).map(c=>({c,time:null})));
   const grid=`<p style="opacity:.75;font-size:.9rem;margin:.8rem 0 0">${SCHED[dow]?'In the order you have them today:':'In Monday’s order:'}</p><div class="cls">${ordered.map(({c,time})=>{const d=ids.includes(c.id);return `<div class="clsitem ${d?'d':''}"><input type="checkbox" class="check" data-cls="${c.id}" ${d?'checked':''} aria-label="Checked ${esc(c.name)} today"><div><div class="nm">${esc(c.name)}</div><div class="when2">${time?ampm(time):'No class '+(SCHED[dow]?'today':'Monday')}</div>${c.links.map(l=>`<a href="${esc(l[1])}" target="_blank" rel="noopener" data-clslink="${c.id}">${esc(l[0])} ↗</a>`).join('')}</div></div>`}).join('')}</div>`;
-  if(left.length){b.innerHTML=earlyNote()+`<p class="q">Your first step</p><p class="task">Check your class pages</p>
+  if(left.length&&pagesDay()){b.innerHTML=earlyNote()+`<p class="q">Your first step</p><p class="task">Check your class pages</p>
     <p class="meta">Teachers change things that never show up on the Canvas calendar. Open each one and add anything new. ${COURSES.length-left.length} of ${COURSES.length} done.</p>${grid}`;return}
-  b.innerHTML=earlyNote()+`<p class="q">✓ Class pages checked today</p><p class="task">Ready to work?</p>
-    <p class="meta">Pick something from Coming up below, or choose a class and start a timer.</p>${startBtns}
-    <details class="recheck"><summary>Look at class pages again</summary>${grid}</details>`;}
+  const pd=pagesDay();b.innerHTML=earlyNote()+`<p class="q">${pd?'\u2713 Class pages checked today':'Next class page check: '+nextPagesDay()}</p><p class="task">Ready to work?</p>
+    <p class="meta">Pick something from your daily goal below, or choose a class and start a timer.</p>${startBtns}
+    <details class="recheck"><summary>${pd?'Look at class pages again':'Look at your class pages'}</summary>${grid}</details>`;}
 
 /* timer */
 /* timer + time log (by class, with an optional note) */
@@ -1159,7 +1182,7 @@ function renderTodaySessions(){const ts=iso(today());const tm=iso(addDays(today(
     body=`<p class="t" style="margin-bottom:.25rem">Spend ${m} minutes studying today.</p><p class="sub">${tip}</p>
       <div class="row"><button class="btn small" data-act="start" data-min="${m}" data-aid="${a.id}">Start ${m} minutes</button>${n>0?`<button class="icon" data-act="plan" data-id="${a.id}" style="color:var(--accent)">Make a study plan</button>`:''}</div>`}
   $('#todaySessions').innerHTML=`<div class="panel u-${n<=1?'soon':'ok'}"><h3>Next test or quiz</h3><p style="margin-bottom:.6rem"><b style="font-weight:600">${esc(a.title)}</b> is ${when}${a.cls?' ('+esc(a.cls)+')':''}.</p>${body}${more}</div>`;}
-function renderDue(){const ids=checkedToday();const left=COURSES.filter(c=>!ids.includes(c.id)).length;
+function renderDue(){const ids=checkedToday();const left=pagesDay()?COURSES.filter(c=>!ids.includes(c.id)).length:0;
   $('#dueNudge').innerHTML=left?`<div class="panel u-soon" style="padding:.85rem 1.1rem"><b style="font-weight:600">This list only shows what\u2019s on Canvas and what you\u2019ve added.</b> You haven\u2019t checked ${left} class page${left===1?'':'s'} today, so something might be missing. <a href="#today" style="color:var(--accent)">Check them on Today</a></div>`:'';
 const tm=iso(addDays(today(),1));const ts=iso(today());
   const items=sorted().filter(a=>!a.done&&a.due<=tm);const el=$('#dueList');
